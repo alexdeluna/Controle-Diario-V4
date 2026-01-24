@@ -3,7 +3,11 @@
  ******************************/
 let estado = JSON.parse(localStorage.getItem('controleDiarioV4')) || {
   turnoAtual: null,
-  turnos: []
+  turnos: [],
+  metas: {
+    valorMensal: 0,
+    compromissos: [] 
+  }
 };
 
 function salvar() {
@@ -46,7 +50,6 @@ function tratarEntradaHora(valor) {
 }
 
 function validarHora(hora) {
-  // Novo regex que aceita HH:MM, incluindo '00:00' até '23:59'
   return /^(0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])$/.test(hora);
 }
 
@@ -66,6 +69,7 @@ function irPara(id) {
   if (id === 'resumoTurno') carregarResumoTurno();
   if (id === 'resumoDia') carregarResumoDia();
   if (id === 'historicoGeral') carregarHistoricoGeral();
+  if (id === 'metasMensais') carregarTelaMetas();
 }
 
 function capturarHora(id) {
@@ -178,6 +182,83 @@ function salvarTurnoNoHistorico() {
 }
 
 /******************************
+ * METAS E CUSTOS FIXOS (V4)
+ ******************************/
+
+function inserirMetaMensal() {
+  const input = document.getElementById('valorMetaMensal');
+  const valor = Number(input.value);
+  if (!isNaN(valor) && valor > 0) {
+    estado.metas.valorMensal = valor;
+    salvar();
+    alert('Meta mensal salva!');
+  } else {
+    alert('Valor da meta inválido.');
+  }
+}
+
+function inserirCustoFixo() {
+  const descricaoInput = document.getElementById('descricaoCustoFixo');
+  const valorInput = document.getElementById('valorCustoFixo');
+  const descricao = descricaoInput.value.trim();
+  const valor = Number(valorInput.value);
+
+  if (descricao && !isNaN(valor) && valor > 0) {
+    estado.metas.compromissos.push({ nome: descricao, valor: valor });
+    salvar();
+    renderizarListaCustosFixos();
+    descricaoInput.value = '';
+    valorInput.value = '';
+  } else {
+    alert('Descrição ou valor do custo fixo inválido.');
+  }
+}
+
+function renderizarListaCustosFixos() {
+  const lista = document.getElementById('listaCustosFixos');
+  lista.innerHTML = '';
+  let totalCustosFixos = 0;
+
+  estado.metas.compromissos.forEach((custo, index) => {
+    totalCustosFixos += custo.valor;
+    const li = document.createElement('li');
+    li.style.display = 'flex';
+    li.style.justifyContent = 'space-between';
+    li.style.padding = '5px 0';
+    li.style.borderBottom = '1px solid #eee';
+    li.innerHTML = `<span>${custo.nome}</span> <span>R$ ${custo.valor.toFixed(2)}</span>`;
+    lista.appendChild(li);
+  });
+
+  document.getElementById('totalCustosFixos').value = totalCustosFixos.toFixed(2);
+}
+
+function carregarTelaMetas() {
+    document.getElementById('valorMetaMensal').value = estado.metas.valorMensal > 0 ? estado.metas.valorMensal.toFixed(2) : '';
+    renderizarListaCustosFixos();
+    carregarResumoMetas(); 
+}
+
+function carregarResumoMetas() {
+  let lucroDoMes = 0;
+  estado.turnos.forEach(t => {
+    const custosTotais = t.custos.abastecimento + t.custos.outros;
+    lucroDoMes += (t.apurado - custosTotais);
+  });
+
+  let totalCustosFixos = 0;
+  estado.metas.compromissos.forEach(c => totalCustosFixos += c.valor);
+
+  const faltaParaMeta = estado.metas.valorMensal - lucroDoMes;
+
+  document.getElementById('resumoSuaMeta').value = estado.metas.valorMensal.toFixed(2);
+  document.getElementById('resumoTotalCustosFixos').value = totalCustosFixos.toFixed(2);
+  document.getElementById('resumoLucroDoMes').value = lucroDoMes.toFixed(2);
+  document.getElementById('resumoFaltaParaMeta').value = faltaParaMeta.toFixed(2);
+}
+
+
+/******************************
  * RESUMOS E HISTÓRICO
  ******************************/
 
@@ -200,7 +281,7 @@ function carregarResumoTurno() {
 }
 
 function carregarResumoDia() {
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = new Date().toISOString().split('T')[0]; // Data de hoje YYYY-MM-DD
   const turnosDia = estado.turnos.filter(t => t.data === hoje);
 
   let lucroTotal = 0;
@@ -280,6 +361,3 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('Erro SW:', err));
   });
 }
-
-
-
