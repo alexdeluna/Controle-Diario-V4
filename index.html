@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-
-<script src="https://cdnjs.cloudflare.com"></script>
-<script src="https://cdnjs.cloudflare.com"></script>
-<script src="https://cdnjs.cloudflare.com"></script>
-  
   <meta charset="UTF-8">
-  <title>Controle Diário V4</title> <!-- Título Atualizado -->
+  <title>Controle Diário V4</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#000000">
+
+  <!-- Bibliotecas para Exportação PDF e Excel (LINKS COMPLETOS AQUI) -->
+  <script src="https://cdnjs.cloudflare.com"></script>
+  <script src="https://cdnjs.cloudflare.com"></script>
+  <script src="https://cdnjs.cloudflare.com"></script>
 
   <style>
     body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 0; }
@@ -43,7 +43,7 @@
     <button onclick="irPara('fimTurno')">⏹ Finalizar Turno</button>
     <button onclick="irPara('resumoTurno')">📊 Resumo do Turno Atual</button>
     <button onclick="irPara('resumoDia')">📅 Resumo do Dia</button>
-    <button onclick="irPara('metasMensais')">📈 Metas Mensais</button> <!-- Botão Novo -->
+    <button onclick="irPara('metasMensais')">📈 Metas Mensais</button>
     <button onclick="irPara('historicoGeral')">📚 Histórico Geral</button>
   </section>
 
@@ -210,13 +210,12 @@
   <section id="historicoGeral" class="tela">
     <h2>📚 Histórico Geral</h2>
     <ul id="listaHistorico" style="list-style: none; padding: 0;"></ul>
-    </ul>
     <button class="btn-block" onclick="exportarExcel()">⬇️ Exportar para Excel/CSV</button>
     <button class="btn-block" onclick="exportarPDF()">⬇️ Exportar para PDF</button>
     <button class="btn-block btn-danger" onclick="limparTodoHistorico()" style="font-size:12px">Apagar Todo Histórico</button>
     <div class="nav">
       <button onclick="irPara('menu')">⬅ Menu</button>
-      </div>
+    </div>
   </section>
 
 </div> <!-- Fim da Div App -->
@@ -225,6 +224,3 @@
 <script src="./app.js"></script>
 </body>
 </html>
-
-
-
