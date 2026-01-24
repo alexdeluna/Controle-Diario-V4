@@ -315,9 +315,16 @@ function carregarResumoDia() {
 function carregarHistoricoGeral() {
   const lista = document.getElementById('listaHistorico');
   lista.innerHTML = '';
-  const turnosOrdenados = [...estado.turnos].reverse();
+  
+  // Criamos uma cópia invertida para a ORDEM DE EXIBIÇÃO (mais recente no topo)
+  const turnosExibicao = [...estado.turnos].reverse();
 
-  turnosOrdenados.forEach((t, i) => {
+  turnosExibicao.forEach((t, i) => {
+    // Calculamos o índice original no array 'estado.turnos' para a função deletarTurno()
+    // turnosExibicao.length - 1 - i nos dá o índice correto no array original
+    const originalIndex = estado.turnos.length - 1 - i;
+
+    // Métricas para exibição
     const totalMinutos = diffHoras(t.horaInicio, t.horaFim);
     const horasFormatadas = formatarMinutosParaHHMM(totalMinutos);
     const custosTotais = t.custos.abastecimento + t.custos.outros;
@@ -328,9 +335,11 @@ function carregarHistoricoGeral() {
 
     const divTurno = document.createElement('li');
     divTurno.className = 'detalhe-turno';
+    divTurno.style.position = 'relative'; // Importante para o botão 'X'
+
     divTurno.innerHTML = `
       <div style="padding: 15px; border: 1px solid #ccc; margin-bottom: 10px; border-radius: 5px; background: #fafafa;">
-        <strong>Data: ${dataFormatada} | Turno ${turnosOrdenados.length - i}</strong><br>
+        <strong>Data: ${dataFormatada} | Turno ${originalIndex + 1}</strong><br>
         ${t.horaInicio} às ${t.horaFim} (${horasFormatadas})<br>
         KM Rodados: ${kmRodados} km<br>
         Total Abastecimento: R$ ${t.custos.abastecimento.toFixed(2)}<br>
@@ -339,9 +348,25 @@ function carregarHistoricoGeral() {
         Lucro: <strong style="color:green;">R$ ${lucro.toFixed(2)}</strong><br>
         Valor da Hora: R$ ${valorHora.toFixed(2)}
       </div>
+      <!-- Botão de Deletar com o índice correto -->
+      <button onclick="deletarTurno(${originalIndex})" style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border-radius: 50%; width: 30px; height: 30px; padding: 0; line-height: 30px; text-align: center;">X</button>
     `;
     lista.appendChild(divTurno);
   });
+}
+
+
+/******************************
+ * FUNÇÕES DE DELEÇÃO
+ ******************************/
+
+function deletarTurno(index) {
+  if (confirm(`Tem certeza que deseja apagar o turno ${index + 1}?`)) {
+    // Remove 1 item a partir do índice especificado
+    estado.turnos.splice(index, 1);
+    salvar(); // Salva o estado atualizado
+    carregarHistoricoGeral(); // Recarrega a lista para mostrar a mudança
+  }
 }
 
 function limparTodoHistorico() {
@@ -416,4 +441,5 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('Erro SW:', err));
   });
 }
+
 
