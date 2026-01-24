@@ -8,9 +8,9 @@
   "theme_color": "#000000",
   "icons": [
 {
-"src": "icon-512.png",
+"src": "https://github.com/alexdeluna/Controle-Diario-V4/blob/main/icon-512.png?raw=true",
 "sizes": "512x512",
-"type": "image/png"
+"type": ".png"
 }
 ],
   "id": "/", 
@@ -20,5 +20,6 @@
   "dir": "ltr"
   "description": "App de controle financeiro diário para motoristas."
 }
+
 
 
