@@ -1,4 +1,4 @@
-const CACHE_NAME = 'controle-diario-v4-2';
+const CACHE_NAME = 'controle-diario-v4'; // Nome do cache atualizado
 
 self.addEventListener('install', event => {
   self.skipWaiting();
@@ -19,7 +19,7 @@ self.addEventListener('activate', event => {
     caches.keys().then(keys =>
       Promise.all(
         keys.map(key => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME) { // Limpa caches de versões anteriores
             return caches.delete(key);
           }
         })
