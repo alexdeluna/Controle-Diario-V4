@@ -353,6 +353,61 @@ function limparTodoHistorico() {
   }
 }
 
+// Função para Exportar para Excel (CSV)
+function exportarExcel() {
+  let csvContent = "data:text/csv;charset=utf-8,";
+  csvContent += "Data;Hora Inicio;Hora Fim;KM Inicial;KM Final;Abastecimento;Outros Custos;Apurado;Lucro;Horas Formatadas;KM Rodados;Valor Hora\n";
+
+  estado.turnos.forEach(t => {
+    const totalMinutos = diffHoras(t.horaInicio, t.horaFim);
+    const horasFormatadas = formatarMinutosParaHHMM(totalMinutos);
+    const custosTotais = t.custos.abastecimento + t.custos.outros;
+    const lucro = t.apurado - custosTotais;
+    const valorHora = (totalMinutos / 60) > 0 ? lucro / (totalMinutos / 60) : 0;
+    const kmRodados = t.kmFinal - t.kmInicial;
+
+    let row = `${t.data};${t.horaInicio};${t.horaFim};${t.kmInicial};${t.kmFinal};${t.custos.abastecimento};${t.custos.outros};${t.apurado};${lucro.toFixed(2)};${horasFormatadas};${kmRodados};${valorHora.toFixed(2)}`;
+    csvContent += row + "\n";
+  });
+
+  var encodedUri = encodeURI(csvContent);
+  var link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "controle_diario_V4.csv");
+  document.body.appendChild(link); // Requerido para Firefox
+  link.click();
+  document.body.removeChild(link);
+}
+
+// Função para Exportar para PDF (Usando jsPDF e AutoTable)
+function exportarPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const dataParaTabela = estado.turnos.map(t => {
+    const totalMinutos = diffHoras(t.horaInicio, t.horaFim);
+    const lucro = t.apurado - (t.custos.abastecimento + t.custos.outros);
+    return [
+      t.data,
+      `${t.horaInicio} - ${t.horaFim}`,
+      t.kmFinal - t.kmInicial,
+      `R$ ${t.custos.abastecimento.toFixed(2)}`,
+      `R$ ${t.custos.outros.toFixed(2)}`,
+      `R$ ${t.apurado.toFixed(2)}`,
+      `R$ ${lucro.toFixed(2)}`
+    ];
+  });
+
+  doc.text("Relatório Controle Diario V4", 10, 10);
+  doc.autoTable({
+    head: [['Data', 'Horas', 'KM Rodados', 'Abastecimento', 'Outros Custos', 'Apurado', 'Lucro']],
+    body: dataParaTabela,
+    startY: 20
+  });
+
+  doc.save("controle_diario_V4.pdf");
+}
+
 // Registro do Service Worker para PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -361,3 +416,4 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('Erro SW:', err));
   });
 }
+
