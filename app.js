@@ -406,6 +406,7 @@ function exportarExcel() {
 
 // Função para Exportar para PDF (Usando jsPDF e AutoTable)
 function exportarPDF() {
+  // Garante que o objeto jsPDF da janela seja acessado corretamente
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
@@ -424,6 +425,7 @@ function exportarPDF() {
   });
 
   doc.text("Relatório Controle Diario V4", 10, 10);
+  // doc.autoTable é um plugin que é adicionado ao objeto doc
   doc.autoTable({
     head: [['Data', 'Horas', 'KM Rodados', 'Abastecimento', 'Outros Custos', 'Apurado', 'Lucro']],
     body: dataParaTabela,
@@ -441,5 +443,6 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('Erro SW:', err));
   });
 }
+
 
 
