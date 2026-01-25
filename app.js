@@ -184,6 +184,67 @@ function salvarTurnoNoHistorico() {
 /******************************
  * METAS E CUSTOS FIXOS (V4)
  ******************************/
+/* ==============================
+   META MENSAL — V4
+============================== */
+
+let metaMensal = JSON.parse(localStorage.getItem('metaMensal')) || { valor: 0 };
+
+/* Atualizar / inserir meta */
+function atualizarMetaMensal() {
+  const valor = Number(document.getElementById('valorMetaMensal').value);
+
+  if (!valor || valor <= 0) {
+    alert('Informe um valor válido para a meta');
+    return;
+  }
+
+  metaMensal.valor = valor;
+  localStorage.setItem('metaMensal', JSON.stringify(metaMensal));
+
+  atualizarResumoMeta();
+}
+
+/* Atualiza os campos de resumo */
+function atualizarResumoMeta() {
+  const campoMeta = document.getElementById('resumoSuaMeta');
+  if (campoMeta) campoMeta.value = `R$ ${metaMensal.valor.toFixed(2)}`;
+
+  calcularResumoMensal();
+}
+
+/* Cálculo mensal (lucro x meta) */
+function calcularResumoMensal() {
+  const historico =
+    JSON.parse(localStorage.getItem('controleDiario')) || {};
+
+  let lucroTotal = 0;
+
+  Object.values(historico).forEach(dia => {
+    dia.forEach(turno => {
+      lucroTotal += turno.lucro || 0;
+    });
+  });
+
+  const falta = metaMensal.valor - lucroTotal;
+
+  const campoLucro = document.getElementById('resumoLucroDoMes');
+  if (campoLucro) campoLucro.value = `R$ ${lucroTotal.toFixed(2)}`;
+
+  const campoFalta = document.getElementById('resumoFaltaParaMeta');
+  if (campoFalta)
+    campoFalta.value =
+      falta > 0 ? `R$ ${falta.toFixed(2)}` : 'Meta atingida 🎉';
+}
+
+/* Carrega ao iniciar */
+window.addEventListener('load', () => {
+  if (metaMensal.valor > 0) {
+    document.getElementById('valorMetaMensal').value = metaMensal.valor;
+    atualizarResumoMeta();
+  }
+});
+
 
 function inserirMetaMensal() {
   const input = document.getElementById('valorMetaMensal');
@@ -256,6 +317,107 @@ function carregarResumoMetas() {
   document.getElementById('resumoLucroDoMes').value = lucroDoMes.toFixed(2);
   document.getElementById('resumoFaltaParaMeta').value = faltaParaMeta.toFixed(2);
 }
+
+/* ==============================
+   CUSTOS FIXOS — V4
+============================== */
+
+let custosFixos = JSON.parse(localStorage.getItem('custosFixos')) || [];
+
+/* Salva no storage */
+function salvarCustosFixos() {
+  localStorage.setItem('custosFixos', JSON.stringify(custosFixos));
+  atualizarTotaisCustosFixos();
+}
+
+/* Renderiza lista */
+function renderizarCustosFixos() {
+  const ul = document.getElementById('listaCustosFixos');
+  ul.innerHTML = '';
+
+  custosFixos.forEach(custo => {
+    const li = document.createElement('li');
+    li.className = 'linha';
+    li.style.gap = '5px';
+
+    li.innerHTML = `
+      <input type="text" class="descricao" value="${custo.descricao}">
+      <input type="number" class="valor" value="${custo.valor}">
+      <button onclick="editarCustoFixo(${custo.id}, this)">✏️</button>
+      <button onclick="excluirCustoFixo(${custo.id})">🗑️</button>
+    `;
+
+    ul.appendChild(li);
+  });
+
+  atualizarTotaisCustosFixos();
+}
+
+/* Inserir novo custo fixo */
+function inserirCustoFixo() {
+  const descricao = document.getElementById('descricaoCustoFixo').value.trim();
+  const valor = Number(document.getElementById('valorCustoFixo').value);
+
+  if (!descricao || !valor || valor <= 0) {
+    alert('Preencha descrição e valor corretamente');
+    return;
+  }
+
+  custosFixos.push({
+    id: Date.now(),
+    descricao,
+    valor
+  });
+
+  document.getElementById('descricaoCustoFixo').value = '';
+  document.getElementById('valorCustoFixo').value = '';
+
+  salvarCustosFixos();
+  renderizarCustosFixos();
+}
+
+/* Editar custo fixo */
+function editarCustoFixo(id, botao) {
+  const li = botao.parentElement;
+  const descricao = li.querySelector('.descricao').value.trim();
+  const valor = Number(li.querySelector('.valor').value);
+
+  if (!descricao || !valor || valor <= 0) {
+    alert('Dados inválidos');
+    return;
+  }
+
+  const custo = custosFixos.find(c => c.id === id);
+  custo.descricao = descricao;
+  custo.valor = valor;
+
+  salvarCustosFixos();
+}
+
+/* Excluir custo fixo */
+function excluirCustoFixo(id) {
+  if (!confirm('Excluir este custo fixo?')) return;
+
+  custosFixos = custosFixos.filter(c => c.id !== id);
+  salvarCustosFixos();
+  renderizarCustosFixos();
+}
+
+/* Atualiza total */
+function atualizarTotaisCustosFixos() {
+  const total = custosFixos.reduce((s, c) => s + c.valor, 0);
+
+  const campo = document.getElementById('totalCustosFixos');
+  if (campo) campo.value = total.toFixed(2);
+
+  const resumo = document.getElementById('resumoTotalCustosFixos');
+  if (resumo) resumo.value = `R$ ${total.toFixed(2)}`;
+}
+
+/* Carregar ao iniciar */
+window.addEventListener('load', () => {
+  renderizarCustosFixos();
+});
 
 
 /******************************
