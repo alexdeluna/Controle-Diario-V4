@@ -1,15 +1,15 @@
 {
   "name": "Controle Diário",
   "short_name": "Controle",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/Controle-Diario-V4/",
+  "scope": "/Controle-Diario-V4/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-512.png",
+      "src": "/Controle-Diario-V4/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
