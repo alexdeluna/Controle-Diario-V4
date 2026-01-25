@@ -41,7 +41,6 @@
     <button onclick="irPara('inicioTurno')">▶ Iniciar Turno</button>
     <button onclick="irPara('custos')">⛽ Lançar Custos / Ganhos</button>
     <button onclick="irPara('fimTurno')">⏹ Finalizar Turno</button>
-    <button onclick="irPara('resumoTurno')">📊 Resumo do Turno Atual</button>
     <button onclick="irPara('resumoDia')">📅 Resumo do Dia</button>
     <button onclick="irPara('metasMensais')">📈 Metas Mensais</button>
     <button onclick="irPara('historicoGeral')">📚 Histórico Geral</button>
@@ -162,7 +161,7 @@
       <div class="linha">
         <label>Valor da Meta Mensal</label>
         <input id="valorMetaMensal" type="number" step="0.01">
-        <button onclick="inserirMetaMensal()">💾</button>
+        <button onclick="atualizarMetaMensal()">🔄 Atualizar Meta</button>
       </div>
       <hr>
       <div class="linha">
@@ -224,4 +223,5 @@
 <script src="./app.js"></script>
 </body>
 </html>
+
 
