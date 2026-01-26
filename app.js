@@ -47,11 +47,13 @@ function validarHora(hora) {
 function irPara(id) {
   document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
   const telaDestino = document.getElementById(id);
-  if (telaDestino) telaDestino.classList.add('ativa');
-  if (id === 'resumoTurno') carregarResumoTurno();
-  if (id === 'resumoDia') carregarResumoDia();
-  if (id === 'historicoGeral') carregarHistoricoGeral();
-  if (id === 'metasMensais') carregarTelaMetas();
+  if (telaDestino) {
+    telaDestino.classList.add('ativa');
+    if (id === 'resumoTurno') carregarResumoTurno();
+    if (id === 'resumoDia') carregarResumoDia();
+    if (id === 'historicoGeral') carregarHistoricoGeral();
+    if (id === 'metasMensais') carregarTelaMetas();
+  }
 }
 
 function capturarHora(id) {
@@ -86,6 +88,7 @@ function adicionarAbastecimento() {
   if (v > 0 && estado.turnoAtual) {
     estado.turnoAtual.custos.abastecimento += v;
     document.getElementById('totalAbastecido').value = estado.turnoAtual.custos.abastecimento.toFixed(2);
+    document.getElementById('valorAbastecimento').value = '';
     atualizarTotalCustos();
     salvar();
   }
@@ -96,6 +99,7 @@ function adicionarOutrosCustos() {
   if (v > 0 && estado.turnoAtual) {
     estado.turnoAtual.custos.outros += v;
     document.getElementById('totalOutrosCustos').value = estado.turnoAtual.custos.outros.toFixed(2);
+    document.getElementById('valorOutrosCustos').value = '';
     atualizarTotalCustos();
     salvar();
   }
@@ -110,9 +114,10 @@ function atualizarTotalCustos() {
 
 function inserirApurado() {
   const v = Number(document.getElementById('apurado').value);
-  if (estado.turnoAtual && !isNaN(v)) {
-    estado.turnoAtual.apurado = v;
+  if (estado.turnoAtual) {
+    estado.turnoAtual.apurado = v || 0;
     salvar();
+    alert('Ganhos salvos!');
     irPara('menu');
   }
 }
@@ -138,20 +143,21 @@ function salvarTurnoNoHistorico() {
     estado.turnos.push({...estado.turnoAtual});
     estado.turnoAtual = null;
     salvar();
+    alert('Turno arquivado!');
     window.location.reload();
   }
 }
 
 /******************************
- * METAS E CUSTOS FIXOS (UNIFICADO)
+ * METAS E CUSTOS FIXOS (AJUSTADO AO HTML)
  ******************************/
-function inserirMetaMensal() {
+function atualizarMetaMensal() {
   const v = Number(document.getElementById('valorMetaMensal').value);
   if (v > 0) {
     estado.metas.valorMensal = v;
     salvar();
     carregarResumoMetas();
-    alert('Meta salva!');
+    alert('Meta atualizada!');
   }
 }
 
@@ -160,6 +166,8 @@ function inserirCustoFixo() {
   const valor = Number(document.getElementById('valorCustoFixo').value);
   if (desc && valor > 0) {
     estado.metas.compromissos.push({ id: Date.now(), nome: desc, valor: valor });
+    document.getElementById('descricaoCustoFixo').value = '';
+    document.getElementById('valorCustoFixo').value = '';
     salvar();
     renderizarListaCustosFixos();
     carregarResumoMetas();
@@ -180,9 +188,9 @@ function renderizarListaCustosFixos() {
   estado.metas.compromissos.forEach(c => {
     total += c.valor;
     const li = document.createElement('li');
-    li.className = 'linha';
+    li.style = "display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #eee; padding:4px;";
     li.innerHTML = `<span>${c.nome}: R$ ${c.valor.toFixed(2)}</span> 
-                    <button onclick="excluirCustoFixo(${c.id})">🗑️</button>`;
+                    <button onclick="excluirCustoFixo(${c.id})" style="background:red; padding:2px 8px;">🗑️</button>`;
     lista.appendChild(li);
   });
   document.getElementById('totalCustosFixos').value = total.toFixed(2);
@@ -195,42 +203,54 @@ function carregarTelaMetas() {
 }
 
 function carregarResumoMetas() {
-  let lucroMes = estado.turnos.reduce((acc, t) => acc + (t.apurado - (t.custos.abastecimento + t.custos.outros)), 0);
-  let custosFixos = estado.metas.compromissos.reduce((acc, c) => acc + c.valor, 0);
-  let falta = Math.max(estado.metas.valorMensal - (lucroMes - custosFixos), 0);
+  const lucroTurnos = estado.turnos.reduce((acc, t) => acc + (t.apurado - (t.custos.abastecimento + t.custos.outros)), 0);
+  const totalFixos = estado.metas.compromissos.reduce((acc, c) => acc + c.valor, 0);
+  const lucroLiquido = lucroTurnos - totalFixos;
+  const falta = Math.max(estado.metas.valorMensal - lucroLiquido, 0);
 
   document.getElementById('resumoSuaMeta').value = `R$ ${estado.metas.valorMensal.toFixed(2)}`;
-  document.getElementById('resumoTotalCustosFixos').value = `R$ ${custosFixos.toFixed(2)}`;
-  document.getElementById('resumoLucroDoMes').value = `R$ ${lucroMes.toFixed(2)}`;
+  document.getElementById('resumoTotalCustosFixos').value = `R$ ${totalFixos.toFixed(2)}`;
+  document.getElementById('resumoLucroDoMes').value = `R$ ${lucroLiquido.toFixed(2)}`;
   document.getElementById('resumoFaltaParaMeta').value = `R$ ${falta.toFixed(2)}`;
 }
 
 /******************************
- * RESUMOS E EXPORTAÇÃO
+ * RESUMOS E HISTÓRICO
  ******************************/
 function carregarResumoTurno() {
   const t = estado.turnoAtual;
-  if (!t || !t.horaFim) return;
+  if (!t) return;
   const min = diffHoras(t.horaInicio, t.horaFim);
   const custos = t.custos.abastecimento + t.custos.outros;
   document.getElementById('resumoHoras').innerText = formatarMinutosParaHHMM(min);
   document.getElementById('resumoKM').innerText = `${t.kmFinal - t.kmInicial} km`;
   document.getElementById('resumoCustos').innerText = `R$ ${custos.toFixed(2)}`;
   document.getElementById('resumoLucro').innerText = `R$ ${(t.apurado - custos).toFixed(2)}`;
+  const lucro = t.apurado - custos;
+  const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
+  document.getElementById('resumoValorHora').innerText = `R$ ${vHora.toFixed(2)}/h`;
 }
 
 function carregarResumoDia() {
   const hoje = new Date().toISOString().split('T')[0];
   const turnos = estado.turnos.filter(t => t.data === hoje);
-  let lucro = 0, km = 0, min = 0;
+  let lucro = 0, km = 0, min = 0, gas = 0, out = 0, apur = 0;
   turnos.forEach(t => {
     min += diffHoras(t.horaInicio, t.horaFim);
     km += (t.kmFinal - t.kmInicial);
+    gas += t.custos.abastecimento;
+    out += t.custos.outros;
+    apur += t.apurado;
     lucro += (t.apurado - (t.custos.abastecimento + t.custos.outros));
   });
   document.getElementById('diaHorasTrabalhadas').innerText = formatarMinutosParaHHMM(min);
   document.getElementById('diaKM').innerText = `${km} km`;
+  document.getElementById('diaAbastecido').innerText = `R$ ${gas.toFixed(2)}`;
+  document.getElementById('diaOutrosCustos').innerText = `R$ ${out.toFixed(2)}`;
+  document.getElementById('diaApurado').innerText = `R$ ${apur.toFixed(2)}`;
   document.getElementById('diaLucro').innerText = `R$ ${lucro.toFixed(2)}`;
+  const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
+  document.getElementById('diaValorHora').innerText = `R$ ${vHora.toFixed(2)}/h`;
 }
 
 function carregarHistoricoGeral() {
@@ -241,30 +261,51 @@ function carregarHistoricoGeral() {
     const lucro = t.apurado - (t.custos.abastecimento + t.custos.outros);
     const li = document.createElement('li');
     li.className = 'detalhe-turno';
-    li.style.position = 'relative';
-    li.innerHTML = `<div style="padding:10px; border:1px solid #ccc; margin-bottom:5px; border-radius:5px;">
-        <strong>Data: ${new Date(t.data+'T00:00:00').toLocaleDateString('pt-BR')}</strong><br>
-        Lucro: <span style="color:green">R$ ${lucro.toFixed(2)}</span>
-      </div>
-      <button onclick="deletarTurno(${idx})" style="position:absolute; top:5px; right:5px; background:red; color:white; border-radius:50%">X</button>`;
+    li.style = "position:relative; border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:5px; background:#f9f9f9";
+    li.innerHTML = `<strong>Data: ${new Date(t.data+'T00:00:00').toLocaleDateString('pt-BR')}</strong><br>
+                    Horário: ${t.horaInicio} - ${t.horaFim}<br>
+                    Lucro: <span style="color:green">R$ ${lucro.toFixed(2)}</span>
+                    <button onclick="deletarTurno(${idx})" style="position:absolute; top:5px; right:5px; background:red; color:white; border-radius:50%; width:25px; height:25px; border:none; cursor:pointer">X</button>`;
     lista.appendChild(li);
   });
 }
 
 function deletarTurno(index) {
-  if (confirm('Excluir este turno?')) {
+  if (confirm('Deseja excluir este turno permanentemente?')) {
     estado.turnos.splice(index, 1);
     salvar();
     carregarHistoricoGeral();
   }
 }
 
+function limparTodoHistorico() {
+  if (confirm('ATENÇÃO: Isso apagará todos os turnos salvos! Confirma?')) {
+    estado.turnos = [];
+    salvar();
+    carregarHistoricoGeral();
+  }
+}
+
+function exportarExcel() {
+  let csv = "Data;Início;Fim;KM Rodado;Lucro\n";
+  estado.turnos.forEach(t => {
+    const lucro = t.apurado - (t.custos.abastecimento + t.custos.outros);
+    csv += `${t.data};${t.horaInicio};${t.horaFim};${t.kmFinal-t.kmInicial};${lucro.toFixed(2)}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "historico_controle.csv";
+  link.click();
+}
+
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  const data = estado.turnos.map(t => [t.data, t.horaInicio, t.horaFim, (t.apurado - (t.custos.abastecimento + t.custos.outros)).toFixed(2)]);
-  doc.text("Histórico de Turnos", 10, 10);
-  doc.autoTable({ head: [['Data', 'Início', 'Fim', 'Lucro']], body: data });
+  const col = ["Data", "Horário", "KM", "Lucro"];
+  const rows = estado.turnos.map(t => [t.data, `${t.horaInicio}-${t.horaFim}`, t.kmFinal-t.kmInicial, (t.apurado-(t.custos.abastecimento+t.custos.outros)).toFixed(2)]);
+  doc.text("Histórico de Turnos - Controle Diário", 10, 10);
+  doc.autoTable({ head: [col], body: rows, startY: 20 });
   doc.save("historico.pdf");
 }
 
