@@ -358,45 +358,35 @@ function exportarExcel() {
   link.click();
 }
 
-// Função para Exportar para PDF (Usando jsPDF e AutoTable) - DETALHADO
+// Função para Exportar para PDF (Usando jsPDF e AutoTable)
 function exportarPDF() {
   // Garante que o objeto jsPDF da janela seja acessado corretamente
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('landscape'); // Usando landscape (paisagem) para caber mais dados
-  
-  const col = ["Data", "Horas", "KM", "Gas R$", "Outros R$", "Apurado R$", "Lucro R$", "V/h R$/h"];
-  
-  const rows = estado.turnos.map(t => {
-    const min = diffHoras(t.horaInicio, t.horaFim);
-    const horasFormatadas = formatarMinutosParaHHMM(min);
-    const custosTotal = t.custos.abastecimento + t.custos.outros;
-    const lucro = t.apurado - custosTotal;
-    const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
-    const km = t.kmFinal - t.kmInicial;
+  const doc = new jsPDF();
 
+  const dataParaTabela = estado.turnos.map(t => {
+    const totalMinutos = diffHoras(t.horaInicio, t.horaFim);
+    const lucro = t.apurado - (t.custos.abastecimento + t.custos.outros);
     return [
-      t.data[0], // Acessar apenas a data
-      horasFormatadas,
-      km,
-      t.custos.abastecimento.toFixed(2),
-      t.custos.outros.toFixed(2),
-      t.apurado.toFixed(2),
-      lucro.toFixed(2),
-      vHora.toFixed(2)
+      t.data,
+      `${t.horaInicio} - ${t.horaFim}`,
+      t.kmFinal - t.kmInicial,
+      `R$ ${t.custos.abastecimento.toFixed(2)}`,
+      `R$ ${t.custos.outros.toFixed(2)}`,
+      `R$ ${t.apurado.toFixed(2)}`,
+      `R$ ${lucro.toFixed(2)}`
     ];
   });
 
-  doc.text("Histórico de Turnos Detalhado - Controle Diário V4", 10, 10);
-  doc.autoTable({ 
-    head: [col], 
-    body: rows, 
-    startY: 20,
-    styles: { fontSize: 7 } // Fonte menor para caber na página
+  doc.text("Relatório Controle Diario V4", 10, 10);
+  // doc.autoTable é um plugin que é adicionado ao objeto doc
+  doc.autoTable({
+    head: [['Data', 'Horas', 'KM Rodados', 'Abastecimento', 'Outros Custos', 'Apurado', 'Lucro']],
+    body: dataParaTabela,
+    startY: 20
   });
-  doc.save("historico_completo.pdf");
+
+  doc.save("controle_diario_V4.pdf");
 }
 
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
-}
