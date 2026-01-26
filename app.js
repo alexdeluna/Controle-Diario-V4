@@ -185,15 +185,53 @@ function renderizarListaCustosFixos() {
   const lista = document.getElementById('listaCustosFixos');
   lista.innerHTML = '';
   let total = 0;
-  estado.metas.compromissos.forEach(c => {
+  estado.metas.compromissos.forEach((c, index) => {
     total += c.valor;
     const li = document.createElement('li');
-    li.style = "display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #eee; padding:4px;";
-    li.innerHTML = `<span>${c.nome}: R$ ${c.valor.toFixed(2)}</span> 
-                    <button onclick="excluirCustoFixo(${c.id})" style="background:red; padding:2px 8px;">🗑️</button>`;
+    li.style = "display:flex; flex-direction:column; gap:5px; margin-bottom:10px; padding:8px; border:1px solid #eee; border-radius:5px; background:#fff;";
+    li.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <input type="text" value="${c.nome}" onchange="editarNomeCustoFixo(${index}, this.value)" style="flex:2; margin-right:5px; border:none; background:transparent; font-weight:bold;">
+        <input type="number" value="${c.valor}" onchange="editarValorCustoFixo(${index}, this.value)" style="flex:1; border:none; background:transparent; text-align:right;">
+        <button onclick="excluirCustoFixo(${c.id})" style="background:none; color:red; border:none; cursor:pointer; margin-left:10px;">🗑️</button>
+      </div>
+      <small style="color:#999; font-size:10px;">Toque no texto ou valor para editar</small>
+    `;
     lista.appendChild(li);
   });
   document.getElementById('totalCustosFixos').value = total.toFixed(2);
+}
+
+function editarNomeCustoFixo(index, novoNome) {
+  if (novoNome.trim()) {
+    estado.metas.compromissos[index].nome = novoNome.trim();
+    salvar();
+    carregarResumoMetas();
+  }
+}
+
+function editarValorCustoFixo(index, novoValor) {
+  const v = Number(novoValor);
+  if (v >= 0) {
+    estado.metas.compromissos[index].valor = v;
+    salvar();
+    renderizarListaCustosFixos();
+    carregarResumoMetas();
+  }
+}
+
+function carregarResumoMetas() {
+  // O lucro do mês é a soma dos lucros de todos os turnos
+  const lucroTurnos = estado.turnos.reduce((acc, t) => acc + (t.apurado - (t.custos.abastecimento + t.custos.outros)), 0);
+  const totalFixos = estado.metas.compromissos.reduce((acc, c) => acc + c.valor, 0);
+  
+  // A meta é independente dos custos fixos, conforme sua solicitação
+  const falta = Math.max(estado.metas.valorMensal - lucroTurnos, 0);
+
+  document.getElementById('resumoSuaMeta').value = `R$ ${estado.metas.valorMensal.toFixed(2)}`;
+  document.getElementById('resumoTotalCustosFixos').value = `R$ ${totalFixos.toFixed(2)}`;
+  document.getElementById('resumoLucroDoMes').value = `R$ ${lucroTurnos.toFixed(2)}`;
+  document.getElementById('resumoFaltaParaMeta').value = `R$ ${falta.toFixed(2)}`;
 }
 
 function carregarTelaMetas() {
@@ -256,20 +294,38 @@ function carregarResumoDia() {
 function carregarHistoricoGeral() {
   const lista = document.getElementById('listaHistorico');
   lista.innerHTML = '';
+  
   [...estado.turnos].reverse().forEach((t, i) => {
     const idx = estado.turnos.length - 1 - i;
-    const lucro = t.apurado - (t.custos.abastecimento + t.custos.outros);
+    const min = diffHoras(t.horaInicio, t.horaFim);
+    const km = t.kmFinal - t.kmInicial;
+    const custosTotal = t.custos.abastecimento + t.custos.outros;
+    const lucro = t.apurado - custosTotal;
+    const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
+
     const li = document.createElement('li');
     li.className = 'detalhe-turno';
-    li.style = "position:relative; border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:5px; background:#f9f9f9";
-    li.innerHTML = `<strong>Data: ${new Date(t.data+'T00:00:00').toLocaleDateString('pt-BR')}</strong><br>
-                    Horário: ${t.horaInicio} - ${t.horaFim}<br>
-                    Lucro: <span style="color:green">R$ ${lucro.toFixed(2)}</span>
-                    <button onclick="deletarTurno(${idx})" style="position:absolute; top:5px; right:5px; background:red; color:white; border-radius:50%; width:25px; height:25px; border:none; cursor:pointer">X</button>`;
+    li.style = "position:relative; border:1px solid #ccc; padding:15px; margin-bottom:15px; border-radius:8px; background:#fff; line-height:1.6; font-size:13px; color:#444;";
+    
+    li.innerHTML = `
+      <div style="border-bottom:1px solid #eee; margin-bottom:10px; padding-bottom:5px; display:flex; justify-content:space-between;">
+        <strong>📅 ${new Date(t.data+'T00:00:00').toLocaleDateString('pt-BR')}</strong>
+        <strong>🕒 ${t.horaInicio} - ${t.horaFim}</strong>
+      </div>
+      <p style="margin:2px 0;">⏱ Intervalo Total: <strong>${formatarMinutosParaHHMM(min)}</strong></p>
+      <p style="margin:2px 0;">🛣 KM Total Rodado: <strong>${km} km</strong></p>
+      <p style="margin:2px 0;">⛽ Total Abastecido: R$ ${t.custos.abastecimento.toFixed(2)}</p>
+      <p style="margin:2px 0;">🛠 Outros Custos: R$ ${t.custos.outros.toFixed(2)}</p>
+      <p style="margin:2px 0;">💰 Valor Apurado: R$ ${t.apurado.toFixed(2)}</p>
+      <hr style="border:0; border-top:1px dashed #eee;">
+      <p style="margin:2px 0; font-size:15px;">💵 Lucro do Dia: <strong style="color:green;">R$ ${lucro.toFixed(2)}</strong></p>
+      <p style="margin:2px 0;">📈 Valor Médio da Hora: <strong>R$ ${vHora.toFixed(2)}/h</strong></p>
+      
+      <button onclick="deletarTurno(${idx})" style="position:absolute; top:12px; right:10px; background:#ff4444; color:white; border-radius:50%; width:24px; height:24px; border:none; cursor:pointer; font-size:12px;">X</button>
+    `;
     lista.appendChild(li);
   });
 }
-
 function deletarTurno(index) {
   if (confirm('Deseja excluir este turno permanentemente?')) {
     estado.turnos.splice(index, 1);
@@ -312,3 +368,4 @@ function exportarPDF() {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
 }
+
