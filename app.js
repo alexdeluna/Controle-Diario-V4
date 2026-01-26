@@ -75,7 +75,7 @@ function confirmarInicioTurno() {
     return;
   }
   estado.turnoAtual = {
-    data: new Date().toISOString().split('T'),
+    data: new Date().toISOString().split('T')[0],
     horaInicio: hora, kmInicial: km, horaFim: '', kmFinal: 0,
     custos: { abastecimento: 0, outros: 0 }, apurado: 0
   };
@@ -206,13 +206,13 @@ function renderizarListaCustosFixos() {
   estado.metas.compromissos.forEach((c, index) => {
     total += c.valor;
     const li = document.createElement('li');
-    // Adicionado estilo para melhor visualização e manter dentro da área
-    li.style = "display:flex; flex-direction:column; gap:5px; margin-bottom:10px; padding:8px; border:1px solid #ccc; border-radius:5px; background:#fafafa;";
+    // Ajuste de estilo para garantir que os elementos caibam na tela
+    li.style = "display:flex; flex-direction:column; gap:5px; margin-bottom:10px; padding:8px; border:1px solid #ccc; border-radius:5px; background:#fafafa; box-sizing: border-box;";
     li.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <input type="text" value="${c.nome}" onchange="editarNomeCustoFixo(${index}, this.value)" style="flex:2; margin-right:5px; border:none; background:transparent; font-weight:bold;">
-        <input type="number" value="${c.valor}" onchange="editarValorCustoFixo(${index}, this.value)" style="flex:1; border:none; background:transparent; text-align:right;">
-        <button onclick="excluirCustoFixo(${c.id})" style="background:none; color:red; border:none; cursor:pointer; font-size:16px;">🗑️</button>
+        <input type="text" value="${c.nome}" onchange="editarNomeCustoFixo(${index}, this.value)" style="flex:2; margin-right:5px; border:none; background:transparent; font-weight:bold; padding:0; box-sizing:border-box;">
+        <input type="number" value="${c.valor}" onchange="editarValorCustoFixo(${index}, this.value)" style="flex:1; border:none; background:transparent; text-align:right; max-width:80px; padding:0; box-sizing:border-box;">
+        <button onclick="excluirCustoFixo(${c.id})" style="background:none; color:red; border:none; cursor:pointer; font-size:16px; margin-left:5px;">🗑️</button>
       </div>
     `;
     lista.appendChild(li);
@@ -231,7 +231,7 @@ function carregarResumoMetas() {
   const lucroTurnos = estado.turnos.reduce((acc, t) => acc + (t.apurado - (t.custos.abastecimento + t.custos.outros)), 0);
   const totalFixos = estado.metas.compromissos.reduce((acc, c) => acc + c.valor, 0);
   
-  // A meta é independente dos custos fixos, conforme sua solicitação
+  // A falta é calculada com base no lucro dos turnos, não subtrai custos fixos.
   const falta = Math.max(estado.metas.valorMensal - lucroTurnos, 0);
 
   document.getElementById('resumoSuaMeta').value = `R$ ${estado.metas.valorMensal.toFixed(2)}`;
@@ -258,8 +258,8 @@ function carregarResumoTurno() {
 }
 
 function carregarResumoDia() {
-  const hoje = new Date().toISOString().split('T');
-  const turnos = estado.turnos.filter(t => t.data === hoje);
+  const hoje = new Date().toISOString().split('T')[0]; // Comparar apenas a data YYYY-MM-DD
+  const turnos = estado.turnos.filter(t => t.data[0] === hoje); // Acessar o primeiro elemento do array data
   let lucro = 0, km = 0, min = 0, gas = 0, out = 0, apur = 0;
   turnos.forEach(t => {
     min += diffHoras(t.horaInicio, t.horaFim);
@@ -292,21 +292,22 @@ function carregarHistoricoGeral() {
 
     const li = document.createElement('li');
     li.className = 'detalhe-turno';
-    li.style = "position:relative; border:1px solid #ccc; padding:15px; margin-bottom:15px; border-radius:8px; background:#fff; line-height:1.6; font-size:13px; color:#444;";
+    // Ajustado estilo para melhor leitura e garantir que caiba na tela
+    li.style = "position:relative; border:1px solid #ccc; padding:15px; margin-bottom:15px; border-radius:8px; background:#fff; line-height:1.4; font-size:14px; color:#333;";
     
     li.innerHTML = `
-      <div style="border-bottom:1px solid #eee; margin-bottom:10px; padding-bottom:5px; display:flex; justify-content:space-between;">
-        <strong>📅 ${new Date(t.data+'T00:00:00').toLocaleDateString('pt-BR')}</strong>
-        <strong>🕒 ${t.horaInicio} - ${t.horaFim}</strong>
+      <div style="border-bottom:1px solid #eee; margin-bottom:8px; padding-bottom:5px; display:flex; justify-content:space-between; font-size:15px;">
+        <strong>Data: ${new Date(t.data[0]+'T00:00:00').toLocaleDateString('pt-BR')}</strong>
+        <strong>Horário: ${t.horaInicio} - ${t.horaFim}</strong>
       </div>
-      <p style="margin:2px 0;">⏱ Intervalo Total: <strong>${formatarMinutosParaHHMM(min)}</strong></p>
-      <p style="margin:2px 0;">🛣 KM Total Rodado: <strong>${km} km</strong></p>
-      <p style="margin:2px 0;">⛽ Total Abastecido: R$ ${t.custos.abastecimento.toFixed(2)}</p>
-      <p style="margin:2px 0;">🛠 Outros Custos: R$ ${t.custos.outros.toFixed(2)}</p>
-      <p style="margin:2px 0;">💰 Valor Apurado: R$ ${t.apurado.toFixed(2)}</p>
-      <hr style="border:0; border-top:1px dashed #eee;">
-      <p style="margin:2px 0; font-size:15px;">💵 Lucro do Dia: <strong style="color:green;">R$ ${lucro.toFixed(2)}</strong></p>
-      <p style="margin:2px 0;">📈 Valor Médio da Hora: <strong>R$ ${vHora.toFixed(2)}/h</strong></p>
+      <p style="margin:2px 0;">Intervalo Total: <strong>${formatarMinutosParaHHMM(min)}</strong></p>
+      <p style="margin:2px 0;">KM Total Rodado: <strong>${km} km</strong></p>
+      <p style="margin:2px 0;">Total Abastecido: R$ ${t.custos.abastecimento.toFixed(2)}</p>
+      <p style="margin:2px 0;">Outros Custos: R$ ${t.custos.outros.toFixed(2)}</p>
+      <p style="margin:2px 0;">Valor Apurado: R$ ${t.apurado.toFixed(2)}</p>
+      <hr style="border:0; border-top:1px dashed #eee; margin:5px 0;">
+      <p style="margin:2px 0; font-size:16px;">Lucro: <strong style="color:green;">R$ ${lucro.toFixed(2)}</strong></p>
+      <p style="margin:2px 0;">Valor Médio da Hora: <strong>R$ ${vHora.toFixed(2)}/h</strong></p>
       
       <button onclick="deletarTurno(${idx})" style="position:absolute; top:12px; right:10px; background:#ff4444; color:white; border-radius:50%; width:24px; height:24px; border:none; cursor:pointer; font-size:12px;">X</button>
     `;
@@ -330,7 +331,6 @@ function limparTodoHistorico() {
   }
 }
 
-// Função para Exportar para Excel (CSV) - DETALHADO
 function exportarExcel() {
   let csv = "Data;Horas Trabalhadas;KM Rodado;Total Abastecido R$;Outros Custos R$;Valor Apurado R$;Lucro R$;Valor Hora R$/h\n";
 
@@ -342,7 +342,7 @@ function exportarExcel() {
     const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
     const km = t.kmFinal - t.kmInicial;
 
-    csv += `${t.data};${horasFormatadas};${km};${t.custos.abastecimento.toFixed(2)};${t.custos.outros.toFixed(2)};${t.apurado.toFixed(2)};${lucro.toFixed(2)};${vHora.toFixed(2)}\n`;
+    csv += `${t.data[0]};${horasFormatadas};${km};${t.custos.abastecimento.toFixed(2)};${t.custos.outros.toFixed(2)};${t.apurado.toFixed(2)};${lucro.toFixed(2)};${vHora.toFixed(2)}\n`;
   });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -352,12 +352,11 @@ function exportarExcel() {
   link.click();
 }
 
-// Função para Exportar para PDF (Usando jsPDF e AutoTable) - DETALHADO
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('landscape'); // Usando landscape (paisagem) para caber mais dados
   
-  const col = ["Data", "Horas", "KM", "Gas", "Outros", "Apurado", "Lucro", "V/h"];
+  const col = ["Data", "Horas", "KM", "Gas R$", "Outros R$", "Apurado R$", "Lucro R$", "V/h R$/h"];
   
   const rows = estado.turnos.map(t => {
     const min = diffHoras(t.horaInicio, t.horaFim);
@@ -368,7 +367,7 @@ function exportarPDF() {
     const km = t.kmFinal - t.kmInicial;
 
     return [
-      t.data,
+      t.data[0],
       horasFormatadas,
       km,
       t.custos.abastecimento.toFixed(2),
@@ -384,8 +383,12 @@ function exportarPDF() {
     head: [col], 
     body: rows, 
     startY: 20,
-    styles: { fontSize: 8 } // Fonte menor para caber na página
+    styles: { fontSize: 8 }
   });
   doc.save("historico_completo.pdf");
 }
 
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
+}
