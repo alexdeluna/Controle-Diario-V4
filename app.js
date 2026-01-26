@@ -162,7 +162,6 @@ function atualizarMetaMensal() {
   }
 }
 
-// NOVO: Função para apagar a meta mensal
 function apagarMetaMensal() {
     if(confirm('Deseja apagar o valor da meta mensal e custos fixos?')) {
         estado.metas.valorMensal = 0;
@@ -266,9 +265,8 @@ function carregarResumoTurno() {
 }
 
 function carregarResumoDia() {
-  // Correção: t.data é um array ['YYYY-MM-DD', 'HH:MM:SS...'], então comparamos com t.data[0]
-  const hoje = new Date().toISOString().split('T')[0];
-  const turnos = estado.turnos.filter(t => t.data[0] === hoje);
+  const hoje = new Date().toISOString().split('T')[0]; // Comparar apenas a data YYYY-MM-DD
+  const turnos = estado.turnos.filter(t => t.data[0] === hoje); // Acessar o primeiro elemento do array data
   let lucro = 0, km = 0, min = 0, gas = 0, out = 0, apur = 0;
   turnos.forEach(t => {
     min += diffHoras(t.horaInicio, t.horaFim);
@@ -305,7 +303,7 @@ function carregarHistoricoGeral() {
     
     li.innerHTML = `
       <div style="border-bottom:1px solid #eee; margin-bottom:8px; padding-bottom:5px; display:flex; justify-content:space-between; font-size:15px;">
-        <strong>Data: ${new Date(t.data+'T00:00:00').toLocaleDateString('pt-BR')}</strong>
+        <strong>Data: ${new Date(t.data[0]+'T00:00:00').toLocaleDateString('pt-BR')}</strong>
         <strong>Horário: ${t.horaInicio} - ${t.horaFim}</strong>
       </div>
       <p style="margin:2px 0;">Intervalo Total: <strong>${formatarMinutosParaHHMM(min)}</strong></p>
@@ -339,7 +337,6 @@ function limparTodoHistorico() {
   }
 }
 
-// Função para Exportar para Excel (CSV) - DETALHADO
 function exportarExcel() {
   let csv = "Data;Horas Trabalhadas;KM Rodado;Total Abastecido R$;Outros Custos R$;Valor Apurado R$;Lucro R$;Valor Hora R$/h\n";
 
@@ -351,7 +348,7 @@ function exportarExcel() {
     const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
     const km = t.kmFinal - t.kmInicial;
 
-    csv += `${t.data};${horasFormatadas};${km};${t.custos.abastecimento.toFixed(2)};${t.custos.outros.toFixed(2)};${t.apurado.toFixed(2)};${lucro.toFixed(2)};${vHora.toFixed(2)}\n`;
+    csv += `${t.data[0]};${horasFormatadas};${km};${t.custos.abastecimento.toFixed(2)};${t.custos.outros.toFixed(2)};${t.apurado.toFixed(2)};${lucro.toFixed(2)};${vHora.toFixed(2)}\n`;
   });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -365,7 +362,7 @@ function exportarExcel() {
 function exportarPDF() {
   // Garante que o objeto jsPDF da janela seja acessado corretamente
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('landscape');
+  const doc = new jsPDF('landscape'); // Usando landscape (paisagem) para caber mais dados
   
   const col = ["Data", "Horas", "KM", "Gas R$", "Outros R$", "Apurado R$", "Lucro R$", "V/h R$/h"];
   
