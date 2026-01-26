@@ -75,7 +75,7 @@ function confirmarInicioTurno() {
     return;
   }
   estado.turnoAtual = {
-    data: new Date().toISOString().split('T')[0],
+    data: new Date().toISOString().split('T'),
     horaInicio: hora, kmInicial: km, horaFim: '', kmFinal: 0,
     custos: { abastecimento: 0, outros: 0 }, apurado: 0
   };
@@ -149,7 +149,7 @@ function salvarTurnoNoHistorico() {
 }
 
 /******************************
- * METAS E CUSTOS FIXOS (AJUSTADO AO HTML)
+ * METAS E CUSTOS FIXOS (AJUSTADO AO HTML E LÓGICA)
  ******************************/
 function atualizarMetaMensal() {
   const v = Number(document.getElementById('valorMetaMensal').value);
@@ -181,27 +181,6 @@ function excluirCustoFixo(id) {
   carregarResumoMetas();
 }
 
-function renderizarListaCustosFixos() {
-  const lista = document.getElementById('listaCustosFixos');
-  lista.innerHTML = '';
-  let total = 0;
-  estado.metas.compromissos.forEach((c, index) => {
-    total += c.valor;
-    const li = document.createElement('li');
-    li.style = "display:flex; flex-direction:column; gap:5px; margin-bottom:10px; padding:8px; border:1px solid #eee; border-radius:5px; background:#fff;";
-    li.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <input type="text" value="${c.nome}" onchange="editarNomeCustoFixo(${index}, this.value)" style="flex:2; margin-right:5px; border:none; background:transparent; font-weight:bold;">
-        <input type="number" value="${c.valor}" onchange="editarValorCustoFixo(${index}, this.value)" style="flex:1; border:none; background:transparent; text-align:right;">
-        <button onclick="excluirCustoFixo(${c.id})" style="background:none; color:red; border:none; cursor:pointer; margin-left:10px;">🗑️</button>
-      </div>
-      <small style="color:#999; font-size:10px;">Toque no texto ou valor para editar</small>
-    `;
-    lista.appendChild(li);
-  });
-  document.getElementById('totalCustosFixos').value = total.toFixed(2);
-}
-
 function editarNomeCustoFixo(index, novoNome) {
   if (novoNome.trim()) {
     estado.metas.compromissos[index].nome = novoNome.trim();
@@ -220,6 +199,33 @@ function editarValorCustoFixo(index, novoValor) {
   }
 }
 
+function renderizarListaCustosFixos() {
+  const lista = document.getElementById('listaCustosFixos');
+  lista.innerHTML = '';
+  let total = 0;
+  estado.metas.compromissos.forEach((c, index) => {
+    total += c.valor;
+    const li = document.createElement('li');
+    // Adicionado estilo para melhor visualização e manter dentro da área
+    li.style = "display:flex; flex-direction:column; gap:5px; margin-bottom:10px; padding:8px; border:1px solid #ccc; border-radius:5px; background:#fafafa;";
+    li.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <input type="text" value="${c.nome}" onchange="editarNomeCustoFixo(${index}, this.value)" style="flex:2; margin-right:5px; border:none; background:transparent; font-weight:bold;">
+        <input type="number" value="${c.valor}" onchange="editarValorCustoFixo(${index}, this.value)" style="flex:1; border:none; background:transparent; text-align:right;">
+        <button onclick="excluirCustoFixo(${c.id})" style="background:none; color:red; border:none; cursor:pointer; font-size:16px;">🗑️</button>
+      </div>
+    `;
+    lista.appendChild(li);
+  });
+  document.getElementById('totalCustosFixos').value = total.toFixed(2);
+}
+
+function carregarTelaMetas() {
+  document.getElementById('valorMetaMensal').value = estado.metas.valorMensal || '';
+  renderizarListaCustosFixos();
+  carregarResumoMetas();
+}
+
 function carregarResumoMetas() {
   // O lucro do mês é a soma dos lucros de todos os turnos
   const lucroTurnos = estado.turnos.reduce((acc, t) => acc + (t.apurado - (t.custos.abastecimento + t.custos.outros)), 0);
@@ -234,26 +240,8 @@ function carregarResumoMetas() {
   document.getElementById('resumoFaltaParaMeta').value = `R$ ${falta.toFixed(2)}`;
 }
 
-function carregarTelaMetas() {
-  document.getElementById('valorMetaMensal').value = estado.metas.valorMensal || '';
-  renderizarListaCustosFixos();
-  carregarResumoMetas();
-}
-
-function carregarResumoMetas() {
-  const lucroTurnos = estado.turnos.reduce((acc, t) => acc + (t.apurado - (t.custos.abastecimento + t.custos.outros)), 0);
-  const totalFixos = estado.metas.compromissos.reduce((acc, c) => acc + c.valor, 0);
-  const lucroLiquido = lucroTurnos - totalFixos;
-  const falta = Math.max(estado.metas.valorMensal - lucroLiquido, 0);
-
-  document.getElementById('resumoSuaMeta').value = `R$ ${estado.metas.valorMensal.toFixed(2)}`;
-  document.getElementById('resumoTotalCustosFixos').value = `R$ ${totalFixos.toFixed(2)}`;
-  document.getElementById('resumoLucroDoMes').value = `R$ ${lucroLiquido.toFixed(2)}`;
-  document.getElementById('resumoFaltaParaMeta').value = `R$ ${falta.toFixed(2)}`;
-}
-
 /******************************
- * RESUMOS E HISTÓRICO
+ * RESUMOS E HISTÓRICO (DETALHADO)
  ******************************/
 function carregarResumoTurno() {
   const t = estado.turnoAtual;
@@ -263,14 +251,14 @@ function carregarResumoTurno() {
   document.getElementById('resumoHoras').innerText = formatarMinutosParaHHMM(min);
   document.getElementById('resumoKM').innerText = `${t.kmFinal - t.kmInicial} km`;
   document.getElementById('resumoCustos').innerText = `R$ ${custos.toFixed(2)}`;
-  document.getElementById('resumoLucro').innerText = `R$ ${(t.apurado - custos).toFixed(2)}`;
   const lucro = t.apurado - custos;
+  document.getElementById('resumoLucro').innerText = `R$ ${lucro.toFixed(2)}`;
   const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
   document.getElementById('resumoValorHora').innerText = `R$ ${vHora.toFixed(2)}/h`;
 }
 
 function carregarResumoDia() {
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = new Date().toISOString().split('T');
   const turnos = estado.turnos.filter(t => t.data === hoje);
   let lucro = 0, km = 0, min = 0, gas = 0, out = 0, apur = 0;
   turnos.forEach(t => {
@@ -294,7 +282,6 @@ function carregarResumoDia() {
 function carregarHistoricoGeral() {
   const lista = document.getElementById('listaHistorico');
   lista.innerHTML = '';
-  
   [...estado.turnos].reverse().forEach((t, i) => {
     const idx = estado.turnos.length - 1 - i;
     const min = diffHoras(t.horaInicio, t.horaFim);
@@ -326,6 +313,7 @@ function carregarHistoricoGeral() {
     lista.appendChild(li);
   });
 }
+
 function deletarTurno(index) {
   if (confirm('Deseja excluir este turno permanentemente?')) {
     estado.turnos.splice(index, 1);
@@ -342,30 +330,62 @@ function limparTodoHistorico() {
   }
 }
 
+// Função para Exportar para Excel (CSV) - DETALHADO
 function exportarExcel() {
-  let csv = "Data;Início;Fim;KM Rodado;Lucro\n";
+  let csv = "Data;Horas Trabalhadas;KM Rodado;Total Abastecido R$;Outros Custos R$;Valor Apurado R$;Lucro R$;Valor Hora R$/h\n";
+
   estado.turnos.forEach(t => {
-    const lucro = t.apurado - (t.custos.abastecimento + t.custos.outros);
-    csv += `${t.data};${t.horaInicio};${t.horaFim};${t.kmFinal-t.kmInicial};${lucro.toFixed(2)}\n`;
+    const min = diffHoras(t.horaInicio, t.horaFim);
+    const horasFormatadas = formatarMinutosParaHHMM(min);
+    const custosTotal = t.custos.abastecimento + t.custos.outros;
+    const lucro = t.apurado - custosTotal;
+    const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
+    const km = t.kmFinal - t.kmInicial;
+
+    csv += `${t.data};${horasFormatadas};${km};${t.custos.abastecimento.toFixed(2)};${t.custos.outros.toFixed(2)};${t.apurado.toFixed(2)};${lucro.toFixed(2)};${vHora.toFixed(2)}\n`;
   });
+
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "historico_controle.csv";
+  link.download = "historico_controle_completo.csv";
   link.click();
 }
 
+// Função para Exportar para PDF (Usando jsPDF e AutoTable) - DETALHADO
 function exportarPDF() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const col = ["Data", "Horário", "KM", "Lucro"];
-  const rows = estado.turnos.map(t => [t.data, `${t.horaInicio}-${t.horaFim}`, t.kmFinal-t.kmInicial, (t.apurado-(t.custos.abastecimento+t.custos.outros)).toFixed(2)]);
-  doc.text("Histórico de Turnos - Controle Diário", 10, 10);
-  doc.autoTable({ head: [col], body: rows, startY: 20 });
-  doc.save("historico.pdf");
-}
+  const doc = new jsPDF('landscape'); // Usando landscape (paisagem) para caber mais dados
+  
+  const col = ["Data", "Horas", "KM", "Gas", "Outros", "Apurado", "Lucro", "V/h"];
+  
+  const rows = estado.turnos.map(t => {
+    const min = diffHoras(t.horaInicio, t.horaFim);
+    const horasFormatadas = formatarMinutosParaHHMM(min);
+    const custosTotal = t.custos.abastecimento + t.custos.outros;
+    const lucro = t.apurado - custosTotal;
+    const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
+    const km = t.kmFinal - t.kmInicial;
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
+    return [
+      t.data,
+      horasFormatadas,
+      km,
+      t.custos.abastecimento.toFixed(2),
+      t.custos.outros.toFixed(2),
+      t.apurado.toFixed(2),
+      lucro.toFixed(2),
+      vHora.toFixed(2)
+    ];
+  });
+
+  doc.text("Histórico de Turnos Detalhado - Controle Diário V4", 10, 10);
+  doc.autoTable({ 
+    head: [col], 
+    body: rows, 
+    startY: 20,
+    styles: { fontSize: 8 } // Fonte menor para caber na página
+  });
+  doc.save("historico_completo.pdf");
 }
 
