@@ -75,7 +75,7 @@ function confirmarInicioTurno() {
     return;
   }
   estado.turnoAtual = {
-    // Note: data é um array ['YYYY-MM-DD', 'HH:MM:SS...']
+    // data é um array ['YYYY-MM-DD', 'HH:MM:SS...']
     data: new Date().toISOString().split('T'),
     horaInicio: hora, kmInicial: km, horaFim: '', kmFinal: 0,
     custos: { abastecimento: 0, outros: 0 }, apurado: 0
@@ -265,8 +265,9 @@ function carregarResumoTurno() {
 }
 
 function carregarResumoDia() {
-  const hoje = new Date().toISOString().split('T')[0]; // Comparar apenas a data YYYY-MM-DD
-  const turnos = estado.turnos.filter(t => t.data[0] === hoje); // Acessar o primeiro elemento do array data
+  // Correção: Acessamos o primeiro elemento do array data (a string 'YYYY-MM-DD')
+  const hoje = new Date().toISOString().split('T')[0]; 
+  const turnos = estado.turnos.filter(t => t.data[0] === hoje); // Compara a string da data
   let lucro = 0, km = 0, min = 0, gas = 0, out = 0, apur = 0;
   turnos.forEach(t => {
     min += diffHoras(t.horaInicio, t.horaFim);
@@ -289,35 +290,48 @@ function carregarResumoDia() {
 function carregarHistoricoGeral() {
   const lista = document.getElementById('listaHistorico');
   lista.innerHTML = '';
-  [...estado.turnos].reverse().forEach((t, i) => {
-    const idx = estado.turnos.length - 1 - i;
-    const min = diffHoras(t.horaInicio, t.horaFim);
-    const km = t.kmFinal - t.kmInicial;
-    const custosTotal = t.custos.abastecimento + t.custos.outros;
-    const lucro = t.apurado - custosTotal;
-    const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
+  // Mapeamos os turnos por dia
+  const turnosPorDia = estado.turnos.reduce((acc, t) => {
+    const data = t.data[0]; // Acessa a string da data
+    if (!acc[data]) acc[data] = [];
+    acc[data].push(t);
+    return acc;
+  }, {});
 
-    const li = document.createElement('li');
-    li.className = 'detalhe-turno';
-    li.style = "position:relative; border:1px solid #ccc; padding:15px; margin-bottom:15px; border-radius:8px; background:#fff; line-height:1.4; font-size:14px; color:#333;";
-    
-    li.innerHTML = `
-      <div style="border-bottom:1px solid #eee; margin-bottom:8px; padding-bottom:5px; display:flex; justify-content:space-between; font-size:15px;">
-        <strong>Data: ${new Date(t.data[0]+'T00:00:00').toLocaleDateString('pt-BR')}</strong>
-        <strong>Horário: ${t.horaInicio} - ${t.horaFim}</strong>
-      </div>
-      <p style="margin:2px 0;">Intervalo Total: <strong>${formatarMinutosParaHHMM(min)}</strong></p>
-      <p style="margin:2px 0;">KM Total Rodado: <strong>${km} km</strong></p>
-      <p style="margin:2px 0;">Total Abastecido: R$ ${t.custos.abastecimento.toFixed(2)}</p>
-      <p style="margin:2px 0;">Outros Custos: R$ ${t.custos.outros.toFixed(2)}</p>
-      <p style="margin:2px 0;">Valor Apurado: R$ ${t.apurado.toFixed(2)}</p>
-      <hr style="border:0; border-top:1px dashed #eee; margin:5px 0;">
-      <p style="margin:2px 0; font-size:16px;">Lucro: <strong style="color:green;">R$ ${lucro.toFixed(2)}</strong></p>
-      <p style="margin:2px 0;">Valor Médio da Hora: <strong>R$ ${vHora.toFixed(2)}/h</strong></p>
+  // Exibimos por dia, com numeração de turno (ex: Turno 1)
+  Object.keys(turnosPorDia).sort((a,b) => new Date(b) - new Date(a)).forEach(data => {
+    turnosPorDia[data].forEach((t, i) => {
+      const idx = estado.turnos.indexOf(t); // Encontra o índice original para exclusão
+      const min = diffHoras(t.horaInicio, t.horaFim);
+      const km = t.kmFinal - t.kmInicial;
+      const custosTotal = t.custos.abastecimento + t.custos.outros;
+      const lucro = t.apurado - custosTotal;
+      const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
+      const dataFormatada = new Date(data+'T00:00:00').toLocaleDateString('pt-BR');
+
+      const li = document.createElement('li');
+      li.className = 'detalhe-turno';
+      li.style = "position:relative; border:1px solid #ccc; padding:15px; margin-bottom:15px; border-radius:8px; background:#fff; line-height:1.4; font-size:14px; color:#333;";
       
-      <button onclick="deletarTurno(${idx})" style="position:absolute; top:12px; right:10px; background:#ff4444; color:white; border-radius:50%; width:24px; height:24px; border:none; cursor:pointer; font-size:12px;">X</button>
-    `;
-    lista.appendChild(li);
+      li.innerHTML = `
+        <div style="border-bottom:1px solid #eee; margin-bottom:8px; padding-bottom:5px; display:flex; justify-content:space-between; font-size:15px;">
+          <strong>Data: ${dataFormatada}</strong>
+          <strong>Turno ${i + 1}</strong>
+        </div>
+        <p style="margin:2px 0;">Horário: <strong>${t.horaInicio} - ${t.horaFim}</strong></p>
+        <p style="margin:2px 0;">Intervalo Total: <strong>${formatarMinutosParaHHMM(min)}</strong></p>
+        <p style="margin:2px 0;">KM Total Rodado: <strong>${km} km</strong></p>
+        <p style="margin:2px 0;">Total Abastecido: R$ ${t.custos.abastecimento.toFixed(2)}</p>
+        <p style="margin:2px 0;">Outros Custos: R$ ${t.custos.outros.toFixed(2)}</p>
+        <p style="margin:2px 0;">Valor Apurado: R$ ${t.apurado.toFixed(2)}</p>
+        <hr style="border:0; border-top:1px dashed #eee; margin:5px 0;">
+        <p style="margin:2px 0; font-size:16px;">Lucro: <strong style="color:green;">R$ ${lucro.toFixed(2)}</strong></p>
+        <p style="margin:2px 0;">Valor Médio da Hora: <strong>R$ ${vHora.toFixed(2)}/h</strong></p>
+        
+        <button onclick="deletarTurno(${idx})" style="position:absolute; top:12px; right:10px; background:#ff4444; color:white; border-radius:50%; width:24px; height:24px; border:none; cursor:pointer; font-size:12px;">X</button>
+      `;
+      lista.appendChild(li);
+    });
   });
 }
 
@@ -337,6 +351,7 @@ function limparTodoHistorico() {
   }
 }
 
+// Função para Exportar para Excel (CSV) - DETALHADO
 function exportarExcel() {
   let csv = "Data;Horas Trabalhadas;KM Rodado;Total Abastecido R$;Outros Custos R$;Valor Apurado R$;Lucro R$;Valor Hora R$/h\n";
 
@@ -358,35 +373,47 @@ function exportarExcel() {
   link.click();
 }
 
-// Função para Exportar para PDF (Usando jsPDF e AutoTable)
+// Função para Exportar para PDF (Usando jsPDF e AutoTable) - DETALHADO
 function exportarPDF() {
   // Garante que o objeto jsPDF da janela seja acessado corretamente
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+  // A vercel recomenda usar window.jspdf.jsPDF se houver conflito
+  // const doc = new window.jspdf.jsPDF('landscape'); 
+  const doc = new jsPDF('landscape');
+  
+  const col = ["Data", "Horas", "KM", "Gas R$", "Outros R$", "Apurado R$", "Lucro R$", "V/h R$/h"];
+  
+  const rows = estado.turnos.map(t => {
+    const min = diffHoras(t.horaInicio, t.horaFim);
+    const horasFormatadas = formatarMinutosParaHHMM(min);
+    const custosTotal = t.custos.abastecimento + t.custos.outros;
+    const lucro = t.apurado - custosTotal;
+    const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
+    const km = t.kmFinal - t.kmInicial;
 
-  const dataParaTabela = estado.turnos.map(t => {
-    const totalMinutos = diffHoras(t.horaInicio, t.horaFim);
-    const lucro = t.apurado - (t.custos.abastecimento + t.custos.outros);
     return [
-      t.data,
-      `${t.horaInicio} - ${t.horaFim}`,
-      t.kmFinal - t.kmInicial,
-      `R$ ${t.custos.abastecimento.toFixed(2)}`,
-      `R$ ${t.custos.outros.toFixed(2)}`,
-      `R$ ${t.apurado.toFixed(2)}`,
-      `R$ ${lucro.toFixed(2)}`
+      t.data[0], // Acessar apenas a data
+      horasFormatadas,
+      km,
+      t.custos.abastecimento.toFixed(2),
+      t.custos.outros.toFixed(2),
+      t.apurado.toFixed(2),
+      lucro.toFixed(2),
+      vHora.toFixed(2)
     ];
   });
 
-  doc.text("Relatório Controle Diario V4", 10, 10);
-  // doc.autoTable é um plugin que é adicionado ao objeto doc
-  doc.autoTable({
-    head: [['Data', 'Horas', 'KM Rodados', 'Abastecimento', 'Outros Custos', 'Apurado', 'Lucro']],
-    body: dataParaTabela,
-    startY: 20
+  doc.text("Histórico de Turnos Detalhado - Controle Diário V4", 10, 10);
+  doc.autoTable({ 
+    head: [col], 
+    body: rows, 
+    startY: 20,
+    styles: { fontSize: 7 }
   });
-
-  doc.save("controle_diario_V4.pdf");
+  doc.save("historico_completo.pdf");
 }
 
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
+}
