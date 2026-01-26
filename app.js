@@ -75,7 +75,8 @@ function confirmarInicioTurno() {
     return;
   }
   estado.turnoAtual = {
-    data: new Date().toISOString().split('T')[0],
+    // Note: data é um array ['YYYY-MM-DD', 'HH:MM:SS...']
+    data: new Date().toISOString().split('T'),
     horaInicio: hora, kmInicial: km, horaFim: '', kmFinal: 0,
     custos: { abastecimento: 0, outros: 0 }, apurado: 0
   };
@@ -149,7 +150,7 @@ function salvarTurnoNoHistorico() {
 }
 
 /******************************
- * METAS E CUSTOS FIXOS (AJUSTADO AO HTML E LÓGICA)
+ * METAS E CUSTOS FIXOS
  ******************************/
 function atualizarMetaMensal() {
   const v = Number(document.getElementById('valorMetaMensal').value);
@@ -159,6 +160,17 @@ function atualizarMetaMensal() {
     carregarResumoMetas();
     alert('Meta atualizada!');
   }
+}
+
+// NOVO: Função para apagar a meta mensal
+function apagarMetaMensal() {
+    if(confirm('Deseja apagar o valor da meta mensal e custos fixos?')) {
+        estado.metas.valorMensal = 0;
+        estado.metas.compromissos = [];
+        salvar();
+        carregarTelaMetas();
+        alert('Meta e custos fixos apagados.');
+    }
 }
 
 function inserirCustoFixo() {
@@ -206,7 +218,6 @@ function renderizarListaCustosFixos() {
   estado.metas.compromissos.forEach((c, index) => {
     total += c.valor;
     const li = document.createElement('li');
-    // Ajuste de estilo para garantir que os elementos caibam na tela
     li.style = "display:flex; flex-direction:column; gap:5px; margin-bottom:10px; padding:8px; border:1px solid #ccc; border-radius:5px; background:#fafafa; box-sizing: border-box;";
     li.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -227,11 +238,8 @@ function carregarTelaMetas() {
 }
 
 function carregarResumoMetas() {
-  // O lucro do mês é a soma dos lucros de todos os turnos
   const lucroTurnos = estado.turnos.reduce((acc, t) => acc + (t.apurado - (t.custos.abastecimento + t.custos.outros)), 0);
   const totalFixos = estado.metas.compromissos.reduce((acc, c) => acc + c.valor, 0);
-  
-  // A falta é calculada com base no lucro dos turnos, não subtrai custos fixos.
   const falta = Math.max(estado.metas.valorMensal - lucroTurnos, 0);
 
   document.getElementById('resumoSuaMeta').value = `R$ ${estado.metas.valorMensal.toFixed(2)}`;
@@ -258,8 +266,9 @@ function carregarResumoTurno() {
 }
 
 function carregarResumoDia() {
-  const hoje = new Date().toISOString().split('T')[0]; // Comparar apenas a data YYYY-MM-DD
-  const turnos = estado.turnos.filter(t => t.data[0] === hoje); // Acessar o primeiro elemento do array data
+  // Correção: t.data é um array ['YYYY-MM-DD', 'HH:MM:SS...'], então comparamos com t.data[0]
+  const hoje = new Date().toISOString().split('T')[0];
+  const turnos = estado.turnos.filter(t => t.data[0] === hoje);
   let lucro = 0, km = 0, min = 0, gas = 0, out = 0, apur = 0;
   turnos.forEach(t => {
     min += diffHoras(t.horaInicio, t.horaFim);
@@ -292,12 +301,11 @@ function carregarHistoricoGeral() {
 
     const li = document.createElement('li');
     li.className = 'detalhe-turno';
-    // Ajustado estilo para melhor leitura e garantir que caiba na tela
     li.style = "position:relative; border:1px solid #ccc; padding:15px; margin-bottom:15px; border-radius:8px; background:#fff; line-height:1.4; font-size:14px; color:#333;";
     
     li.innerHTML = `
       <div style="border-bottom:1px solid #eee; margin-bottom:8px; padding-bottom:5px; display:flex; justify-content:space-between; font-size:15px;">
-        <strong>Data: ${new Date(t.data[0]+'T00:00:00').toLocaleDateString('pt-BR')}</strong>
+        <strong>Data: ${new Date(t.data+'T00:00:00').toLocaleDateString('pt-BR')}</strong>
         <strong>Horário: ${t.horaInicio} - ${t.horaFim}</strong>
       </div>
       <p style="margin:2px 0;">Intervalo Total: <strong>${formatarMinutosParaHHMM(min)}</strong></p>
@@ -331,6 +339,7 @@ function limparTodoHistorico() {
   }
 }
 
+// Função para Exportar para Excel (CSV) - DETALHADO
 function exportarExcel() {
   let csv = "Data;Horas Trabalhadas;KM Rodado;Total Abastecido R$;Outros Custos R$;Valor Apurado R$;Lucro R$;Valor Hora R$/h\n";
 
@@ -342,7 +351,7 @@ function exportarExcel() {
     const vHora = (min / 60) > 0 ? lucro / (min / 60) : 0;
     const km = t.kmFinal - t.kmInicial;
 
-    csv += `${t.data[0]};${horasFormatadas};${km};${t.custos.abastecimento.toFixed(2)};${t.custos.outros.toFixed(2)};${t.apurado.toFixed(2)};${lucro.toFixed(2)};${vHora.toFixed(2)}\n`;
+    csv += `${t.data};${horasFormatadas};${km};${t.custos.abastecimento.toFixed(2)};${t.custos.outros.toFixed(2)};${t.apurado.toFixed(2)};${lucro.toFixed(2)};${vHora.toFixed(2)}\n`;
   });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -352,9 +361,11 @@ function exportarExcel() {
   link.click();
 }
 
+// Função para Exportar para PDF (Usando jsPDF e AutoTable) - DETALHADO
 function exportarPDF() {
+  // Garante que o objeto jsPDF da janela seja acessado corretamente
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('landscape'); // Usando landscape (paisagem) para caber mais dados
+  const doc = new jsPDF('landscape');
   
   const col = ["Data", "Horas", "KM", "Gas R$", "Outros R$", "Apurado R$", "Lucro R$", "V/h R$/h"];
   
@@ -367,7 +378,7 @@ function exportarPDF() {
     const km = t.kmFinal - t.kmInicial;
 
     return [
-      t.data[0],
+      t.data[0], // Acessar apenas a data
       horasFormatadas,
       km,
       t.custos.abastecimento.toFixed(2),
@@ -383,7 +394,7 @@ function exportarPDF() {
     head: [col], 
     body: rows, 
     startY: 20,
-    styles: { fontSize: 8 }
+    styles: { fontSize: 7 } // Fonte menor para caber na página
   });
   doc.save("historico_completo.pdf");
 }
