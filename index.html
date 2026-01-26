@@ -8,9 +8,9 @@
   <meta name="theme-color" content="#000000">
 
   <!-- Links COMPLETOS para as bibliotecas de exportação (CORREÇÃO AQUI) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com"></script>
+  <script src="https://cdnjs.cloudflare.com"></script>
+  <script src="https://cdnjs.cloudflare.com"></script>
 
   <style>
     body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 0; }
@@ -29,6 +29,11 @@
     .btn-block { width: 100%; margin-top: 10px; }
     .btn-save { background: #28a745; }
     .btn-danger { background: #dc3545; }
+    /* Novo estilo para a lista de custos para garantir que caibam */
+    .lista-custos-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 4px 0; border-bottom: 1px solid #eee; }
+    .lista-custos-item input { border: none; background: transparent; padding: 0; }
+    .lista-custos-item input.descricao-edit { font-weight: bold; flex: 3; }
+    .lista-custos-item input.valor-edit { flex: 1; text-align: right; }
   </style>
 </head>
 <body>
@@ -175,7 +180,9 @@
       </div>
       <hr>
       <strong>Lista de Custos Fixos:</strong>
-      <ul id="listaCustosFixos" style="list-style: none; padding: 0;"></ul>
+      <ul id="listaCustosFixos" style="list-style: none; padding: 0;">
+        <!-- Itens inseridos via JS, agora com estilo que cabe -->
+      </ul>
       <div class="linha" style="margin-top: 15px;">
         <label style="font-size: 16px;">Total Custos Fixos</label>
         <input id="totalCustosFixos" class="readonly" type="text" readonly style="font-weight: bold;">
@@ -223,6 +230,3 @@
 <script src="./app.js"></script>
 </body>
 </html>
-
-
-
