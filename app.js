@@ -168,13 +168,19 @@ function renderizarListaCustosFixos() {
     total += c.valor;
     const li = document.createElement('li');
     li.style = "display:flex; flex-direction:column; gap:5px; margin-bottom:10px; padding:8px; border:1px solid #ccc; border-radius:5px; background:#fafafa;";
-    li.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;">
-        <input type="text" class="descricao" value="${custo.descricao}">
-  <input type="number" class="valor" value="${custo.valor}">
+    li.innerHTML = `
+  <div style="display:flex; align-items:center; gap:6px; width:100%;">
+    <input type="text"
+           value="${c.nome}"
+           style="flex:1;"
+           onchange="editarNomeCustoFixo(${index}, this.value)">
 
-  <div class="custo-acoes">
-    <button onclick="editarCustoFixo(${index})">✏️</button>
-    <button onclick="excluirCustoFixo(${index})">🗑️</button>
+    <input type="number"
+           value="${c.valor}"
+           style="width:90px;"
+           onchange="editarValorCustoFixo(${index}, this.value)">
+
+    <button onclick="excluirCustoFixo(${c.id})">🗑️</button>
   </div>
 `;
     lista.appendChild(li);
@@ -245,9 +251,8 @@ function carregarHistoricoGeral() {
       const li = document.createElement('li');
       li.style = "position:relative; border:1px solid #ccc; padding:15px; margin-bottom:15px; border-radius:8px; background:#fff; font-size:14px;";
       li.innerHTML = `
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #eee;">
-          <strong>Data: ${new Date(data+'T00:00:00').toLocaleDateString('pt-BR')}</strong>
-          <strong>Turno ${i + 1}</strong>
+        <div style="display:flex; justify-content:center; margin-bottom:8px; border-bottom:1px solid #eee;">
+        <strong>Turno ${i + 1} — ${new Date(data+'T00:00:00').toLocaleDateString('pt-BR')}</strong>
         </div>
         <p>Horário: ${t.horaInicio} - ${t.horaFim} (${formatarMinutosParaHHMM(min)})</p>
         <p>KM: ${t.kmFinal - t.kmInicial} km</p>
@@ -291,4 +296,5 @@ function exportarPDF() {
 }
 
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
+
 
