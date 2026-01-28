@@ -169,10 +169,14 @@ function renderizarListaCustosFixos() {
     const li = document.createElement('li');
     li.style = "display:flex; flex-direction:column; gap:5px; margin-bottom:10px; padding:8px; border:1px solid #ccc; border-radius:5px; background:#fafafa;";
     li.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;">
-        <input type="text" value="${c.nome}" onchange="editarNomeCustoFixo(${index}, this.value)" style="flex:2; border:none; background:transparent; font-weight:bold;">
-        <input type="number" value="${c.valor}" onchange="editarValorCustoFixo(${index}, this.value)" style="flex:1; border:none; background:transparent; text-align:right;">
-        <button onclick="excluirCustoFixo(${c.id})" style="background:none; color:red; border:none; font-size:16px;">🗑️</button>
-      </div>`;
+        <input type="text" class="descricao" value="${custo.descricao}">
+  <input type="number" class="valor" value="${custo.valor}">
+
+  <div class="custo-acoes">
+    <button onclick="editarCustoFixo(${index})">✏️</button>
+    <button onclick="excluirCustoFixo(${index})">🗑️</button>
+  </div>
+`;
     lista.appendChild(li);
   });
   document.getElementById('totalCustosFixos').value = total.toFixed(2);
@@ -287,3 +291,4 @@ function exportarPDF() {
 }
 
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); }); }
+
