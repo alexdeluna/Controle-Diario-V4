@@ -41,7 +41,7 @@ body { background: var(--bg); color: var(--text); font-family: system-ui, sans-s
 .btn-back { background-color: var(--gray); color: #fff; }
 .btn-secondary { background-color: var(--gray); color: #fff; padding: 0 15px; border-radius: 12px; }
 
-/* NOVOS ESTILOS: CARDS DE RESUMO/HISTÓRICO */
+/* NOVOS ESTILOS: CARDS DE RESUMO/HISTÓRICO. */
 .resumo-card {
     background-color: var(--card);
     border-radius: 12px;
