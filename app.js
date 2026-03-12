@@ -1,5 +1,5 @@
 // ==========================================
-// 1. ESTADO E NAVEGAÇÃO.
+// 1. ESTADO E NAVEGAÇÃO..
 // ==========================================
 const screens = {
     menu: document.getElementById('menu-principal'),
@@ -1173,4 +1173,5 @@ function atualizarPainelResultadoPeriodo(historicoPeriodo) {
     document.getElementById('painel-lucro-km').textContent = `R$ ${kmLucro.toFixed(2).replace('.', ',')}/km`;
 
 }
+
 
