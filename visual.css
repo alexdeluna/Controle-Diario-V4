@@ -1,0 +1,88 @@
+:root {
+  --bg: #1f2933;
+  --card: #2d3748;
+  --text: #f1f5f9;
+  --muted: #cbd5e1;
+  --blue: #3b82f6;
+  --red: #ef4444;
+  --orange: #f59e0b;
+  --gray: #374151;
+  --radius: 16px;
+  --green: #4ade80;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+.app { max-width: 480px; margin: auto; padding: 20px; }
+
+/* HEADER */
+.app-header { text-align: center; margin-bottom: 24px; }
+.datetime { margin-top: 8px; }
+
+/* MENU */
+.menu { display: flex; flex-direction: column; gap: 16px; }
+.menu-card { background-color: var(--card); border: none; border-radius: var(--radius); padding: 20px; display: flex; gap: 16px; cursor: pointer; align-items: center; color: var(--text); text-align: left; transition: background 0.2s; }
+.menu-card:hover { background-color: #394857; }
+.icon { font-size: 36px; }
+
+/* TELAS */
+.hidden { display: none; }
+.screen-title { text-align: center; margin-bottom: 20px; }
+.screen-actions { display: flex; flex-direction: column; gap: 14px; }
+.form-group { margin-bottom: 16px; }
+.form-group input, .form-group select { width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 16px; }
+.inline { display: flex; gap: 8px; }
+
+/* BOTÕES */
+.btn { width: 100%; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; border: none; cursor: pointer; margin-top: 12px; transition: opacity 0.2s; }
+.btn-primary { background-color: var(--blue); color: #fff; }
+.btn-warning { background-color: var(--orange); color: #111; }
+.btn-danger { background-color: var(--red); color: #fff; }
+.btn-back { background-color: var(--gray); color: #fff; }
+.btn-secondary { background-color: var(--gray); color: #fff; padding: 0 15px; border-radius: 12px; }
+
+/* NOVOS ESTILOS: CARDS DE RESUMO/HISTÓRICO */
+.resumo-card {
+    background-color: var(--card);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 20px;
+    border-left: 6px solid var(--blue);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--gray);
+    padding-bottom: 8px;
+}
+.card-title { font-weight: bold; color: var(--muted); font-size: 12px; text-transform: uppercase; }
+.card-date { font-weight: bold; color: var(--blue); }
+.card-body p {
+    margin: 8px 0;
+    font-size: 15px;
+    display: flex;
+    justify-content: space-between;
+}
+.lucro-destaque { color: var(--green) !important; font-size: 18px !important; font-weight: bold; }
+hr { border: 0; border-top: 1px solid var(--gray); margin: 10px 0; }
+
+/* CARD RESULTADO GERAL */
+
+.resumo-card h3{
+    text-align:center;
+    margin-bottom:12px;
+}
+
+.resumo-card p{
+    margin-top:10px;
+    color:var(--muted);
+    font-size:14px;
+}
+
+.resumo-card h2{
+    font-size:22px;
+    margin-bottom:8px;
+}
