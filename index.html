@@ -2,146 +2,458 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Controle Diário V4</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#000000">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle Diário</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="visual.css">
+</head>
+
+<body>
+<main class="app">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <h1>Bem-vindo</h1>
+    <p id="status-indicador">🔴 Turno inativo</p>
+
+    <div class="datetime">
+      <span id="current-date"></span>
+      <span id="current-time"></span>
+    </div>
+  </header>
+  
+ 
+  <!-- MENU PRINCIPAL -->
+  <section class="menu" id="menu-principal">
+
+    <button class="menu-card" data-action="turno">
+      <div class="icon icon-turno">🚗</div>
+      <div class="text">
+        <h2>Gerenciar Turno</h2>
+        <p>Inicie, acompanhe e finalize seu turno</p>
+      </div>
+    </button>
+
+    <button class="menu-card" data-action="custos">
+      <div class="icon icon-custos">💸</div>
+      <div class="text">
+        <h2>Custos</h2>
+        <p>Registre combustível e despesas</p>
+      </div>
+    </button>
+
+    <button class="menu-card" data-action="resumos">
+      <div class="icon icon-resumo">📊</div>
+      <div class="text">
+        <h2>Resumos</h2>
+        <p>Resultados e histórico</p>
+      </div>
+    </button>
+	
+	    <button class="menu-card" data-action="metas">
+      <div class="icon icon-metas">🎯</div>
+      <div class="text">
+        <h2>Metas</h2>
+        <p>Objetivos diários</p>
+      </div>
+    </button>
+	
+	<button class="menu-card" data-action="acompanhando">
+	<div class="icon icon-acompanhando">📊</div>
+	<div class="text">
+		<h2>Acompanhando Resultados</h2>
+		<p>Dados Financeiros</p>
+	</div>
+	</button>
+	
+	
+  </section>
+
+  <!-- MENU TURNO -->
+  <section class="screen hidden" id="screen-menu-turno">
+
+  <h2 class="screen-title">Gerenciar Turno</h2>
+
+  <div class="screen-actions">
+
+    <button class="btn btn-primary" id="btn-ir-iniciar-turno">
+      Iniciar Turno
+    </button>
+
+    <button class="btn btn-danger" id="btn-ir-finalizar-turno">
+      Finalizar Turno
+    </button>
+
+    <button class="btn btn-back" id="voltar-menu-principal">
+      ← Voltar
+    </button>
+	<button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+
+  </div>
+
+</section>
+
+  <!-- INICIAR TURNO -->
+  <section class="screen hidden" id="screen-turno">
+    <h2 class="screen-title">Iniciar Turno</h2>
+
+    <div class="form-group">
+      <label>Hora inicial</label>
+      <div class="inline">
+		<input type="time" id="hora-inicio">
+		<button type="button" class="btn-secondary" id="btn-hora-atual">Agora</button>
+		</div>
+    </div>
+
+    <div class="form-group">
+      <label>KM inicial</label>
+      <input type="number" id="km-inicial">
+    </div>
+
+    <button class="btn btn-primary" id="btn-iniciar-turno">Iniciar Turno</button>
+    <p class="status-message" id="status-turno"></p>
+    <button class="btn btn-back" id="voltar-menu-turno">← Voltar</button>
+	<button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+  </section>
+  
+
+  <!-- FINALIZAR TURNO -->
+  <section class="screen hidden" id="screen-finalizar-turno">
+    <h2 class="screen-title">Finalizar Turno</h2>
+
+    <div class="form-group">
+      <label>Hora final</label>
+      <div class="inline">
+		<input type="time" id="hora-fim">
+		<button type="button" class="btn-secondary" id="btn-hora-final-atual">Agora</button>
+		</div>
+    </div>
+
+    <div class="form-group">
+      <label>KM final</label>
+      <input type="number" id="km-final">
+    </div>
+
+    <div class="form-group">
+      <label>Apurado (R$)</label>
+      <input type="number" id="apurado" step="0.01">
+    </div>
+
+<button class="btn btn-primary" id="btn-finalizar-turno">Finalizar Turno</button>
+    <p class="status-message" id="status-finalizar"></p>
+<button class="btn btn-back" id="voltar-menu-finalizar">← Voltar</button>
+<button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+  </section>
+
+<!-- MENU CUSTOS (PRINCIPAL) COM RESUMO -->
+<section class="screen hidden" id="screen-menu-custos">
+  <h2 class="screen-title">Custos</h2>
+  
+  <!-- NOVO BLOCO DE RESUMO RÁPIDO -->
+  <div class="resumo-dia" style="background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+    <p style="font-size: 14px; opacity: 0.8;">Resumo de hoje:</p>
+    <p>⛽ Abastecimento: <strong id="resumo-custo-abast">R$ 0,00</strong></p>
+    <p>🍕 Outros Custos: <strong id="resumo-custo-outros">R$ 0,00</strong></p>
+    <hr style="margin: 10px 0; border: 0; border-top: 1px solid var(--gray);">
+    <p>💰 Total: <strong id="resumo-custo-total" style="color: var(--orange); font-size: 1.2em;">R$ 0,00</strong></p>
+  </div>
+
+  <div class="screen-actions">
+    <button class="btn btn-primary" id="btn-ir-abastecimento">Abastecimento</button>
+    <button class="btn btn-warning" id="btn-ir-outros-custos">Outros Custos</button>
+    <button class="btn btn-back" id="voltar-custos-principal">← Voltar</button>
+    <button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+  </div>
+</section>
+
+
+<!-- TELA: ABASTECIMENTO -->
+<section class="screen hidden" id="screen-abastecimento">
+  <h2 class="screen-title">Abastecimento</h2>
+  <div class="form-group">
+    <label>Valor do Abastecimento (R$)</label>
+    <input type="number" id="valor-abastecimento" placeholder="Ex: 50.00" step="0.01">
+  </div>
+  <button class="btn btn-primary" id="btn-salvar-abastecimento">Inserir Abastecimento</button>
+  
+  <div class="resumo-custo" style="margin-top:20px; text-align:center;">
+    <p>Total abastecido hoje:</p>
+    <h3 id="total-abastecido-dia">R$ 0,00</h3>
+  </div>
+  
+  <button class="btn btn-back" id="voltar-menu-custos-abast">← Voltar</button>
+  <button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+</section>
+
+<!-- TELA: OUTROS CUSTOS -->
+<section class="screen hidden" id="screen-outros-custos">
+  <h2 class="screen-title">Outros Custos</h2>
+  
+  <div class="form-group">
+    <label>Tipo de Custo</label>
+    <select id="tipo-custo" class="btn-secondary" style="width:100%; padding:12px; margin-bottom:10px;">
+      <option value="Agua">Água</option>
+      <option value="Alimentacao">Alimentação</option>
+      <option value="Estacionamento">Estacionamento</option>
+      <option value="Outros">Outros (Descrever)</option>
+    </select>
+  </div>
+
+  <div class="form-group hidden" id="group-desc-outros">
+    <label>Descrição</label>
+    <input type="text" id="desc-custo-outros" placeholder="Ex: Almoço no Zé">
+  </div>
+
+  <div class="form-group">
+    <label>Valor (R$)</label>
+    <input type="number" id="valor-custo-outro" step="0.01">
+  </div>
+
+  <button class="btn btn-warning" id="btn-salvar-custo-outro">Adicionar Custo</button>
+
+  <div class="lista-custos-container" style="margin-top:20px;">
+    <p>Total de custos: <strong id="total-outros-valor">R$ 0,00</strong></p>
+    <ul id="lista-detalhada-custos" style="list-style:none; padding:0; margin-top:10px;">
+      <!-- Itens entrarão aqui via JS -->
+    </ul>
+  </div>
+
+  <button class="btn btn-back" id="voltar-menu-custos-outros">← Voltar</button>
+  <button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+</section>
+
+<!-- TELA ESCOLHA RESUMOS -->
+<section class="screen hidden" id="screen-resumos">
+  <h2 class="screen-title">Resumos</h2>
+  <div class="screen-actions">
+    <button class="btn btn-primary" id="btn-resumo-diario">Resumo Diário</button>
+    <button class="btn btn-primary" id="btn-historico-geral">Histórico Geral</button>
+    <button class="btn btn-back" id="voltar-menu-resumos">← Voltar</button>
+	<button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+  </div>
+</section>
+
+<!-- TELA RESUMO DIÁRIO -->
+<section class="screen hidden" id="screen-resumo-diario">
+  <h2 class="screen-title">Resumo Diário</h2>
+  <div class="resumo-dia">
+    <p><strong>Intervalo total:</strong> <span id="resumo-intervalo">--:--</span></p>
+    <p><strong>KM total rodado:</strong> <span id="resumo-km">0</span> km</p>
+    <p><strong>Total Abastecido:</strong> R$ <span id="resumo-abastecimento">0,00</span></p>
+    <p><strong>Outros Custos:</strong> R$ <span id="resumo-outros">0,00</span></p>
+    <p><strong>Valor Apurado:</strong> R$ <span id="resumo-apurado">0,00</span></p>
+    <p><strong>Lucro do Dia:</strong> R$ <span id="resumo-lucro">0,00</span></p>
+    <p><strong>Valor Médio da Hora:</strong> R$ <span id="resumo-hora">0,00</span> /h</p>
+  </div>
+  <button class="btn btn-back" id="voltar-resumo-diario">← Voltar</button>
+  <button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+</section>
+
+<!-- TELA HISTÓRICO GERAL -->
+<section class="screen hidden" id="screen-historico-geral">
+  <h2 class="screen-title">Histórico Geral</h2>
+  
+  <div class="historico-botoes">
+    <button class="btn btn-warning" id="export-pdf">Exportar PDF</button>
+    <button class="btn btn-warning" id="export-excel">Exportar Excel</button>
+    <button class="btn btn-warning" id="export-mensal">Exportar Relatório Mensal</button>
+</div>
+
+  <ul id="lista-historico" style="list-style:none; padding:0; margin-top:10px;">
+    <!-- Cada turno será exibido aqui via JS -->
+  </ul>
+
+  <button class="btn btn-back" id="voltar-historico">← Voltar</button>
+  <button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+</section>
+
+<div id="screen-acompanhando-resultados" class="hidden">
+
+    <div class="top-bar" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:15px;">
+
+    
+    <h2 style="flex:1; text-align:center; margin-right:60px;">
+        Acompanhando Resultados
+    </h2>
+
+	<p id="periodo-analisado" style="text-align:center; color:var(--muted); margin-bottom:6px;"></p>
+	<p id="mensagem-periodo" style="text-align:center; color:var(--muted); margin-bottom:10px;"></p>
+
+
+</div>
+
+    <div class="container">
+
+         <div class="resumo-card">
+
+            <h3 style="margin-bottom:10px;">📊 Resultado Geral</h3>
+			
+			<!-- Seção para selecionar o período -->
+<div class="form-group">
+    <label for="data-inicio">Data Início:</label>
+    <input type="date" id="data-inicio" name="data-inicio">
+</div>
+
+<div class="form-group">
+    <label for="data-fim">Data Fim:</label>
+    <input type="date" id="data-fim" name="data-fim">
+</div>
+
+<button id="btn-filtrar-periodo" class="btn btn-primary">Filtrar por Período</button>
+
+            <p>Apurado Total:</p>
+            <h2 id="painel-apurado-total" style="color:#60a5fa;">R$ 0,00</h2>
+
+            <p>Lucro Total:</p>
+            <h2 id="painel-lucro-total" style="color:#4ade80;">R$ 0,00</h2>
+
+            <p>Custos Totais:</p>
+            <h2 id="painel-custos-total" style="color:#f87171;">R$ 0,00</h2>
+
+            <hr>
+
+            <p>KM Total Rodado:</p>
+            <h2 id="painel-km-total">0 km</h2>
+			
+			<hr>
+			
+			<p>Média por Hora (Apurado):</p>
+            <h2 id="painel-hora-apurado">R$ 0,00/h</h2>
+			
+			<p>Apurado por KM:</p>
+            <h2 id="painel-apurado-km">R$ 0,00/km</h2>
+			
+			<hr>
+			
+			<p>Média por Hora (Lucro):</p>
+            <h2 id="painel-hora-lucro">R$ 0,00/h</h2>
+			
+            <p>Lucro por KM:</p>
+            <h2 id="painel-lucro-km">R$ 0,00/km</h2>
+
+            
+            <hr>            
+
+        </div> 
+		
+		
+
+    </div>
+	
+	<button id="voltar-acompanhando" class="btn btn-warning">
+        ← Voltar
+    </button>
+
+</div>
+
+<!-- TELA: MENU DE METAS -->
+<section class="screen hidden" id="screen-metas">
+  <h2 class="screen-title">Metas</h2>
+  <div class="screen-actions">
+    <button class="btn btn-primary" id="btn-meta-mensal">📅 Meta Mensal</button>
+    <button class="btn btn-primary" id="btn-meta-semanal">🗓️ Meta Semanal</button>
+    <button class="btn btn-primary" id="btn-meta-diaria">☀️ Meta Diária</button>
+    <button class="btn btn-primary" id="btn-meta-por-data">🎯 Meta por Data e Valor</button>
+  </div>
+  <button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+</section>
+
+<!-- TELA: FORMULÁRIO META MENSAL -->
+<section class="screen hidden" id="screen-meta-mensal">
+  <h2 class="screen-title">Meta Mensal</h2>
+  <div class="form-group">
+    <label>Valor da Meta Mensal (R$)</label>
+    <input type="number" id="input-meta-mensal" placeholder="Ex: 5000.00">
+  </div>  
+  <button class="btn btn-primary" id="btn-salvar-meta-mensal">Definir Meta</button>
+  
+  <!-- Onde o cálculo "Faltam R$ XXX" aparece -->
+  <div id="progresso-mensal" class="resumo-dia" style="margin-top:20px; background: var(--card); padding:15px; border-radius:12px; min-height: 50px;">
+    <p style="opacity:0.5; text-align:center;">Aguardando definição de meta...</p>
+  </div>
+  
+  <button class="btn btn-back" id="voltar-metas-mensal">← Voltar</button>
+  <button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+</section>
+
+<!-- TELA: FORMULÁRIO META SEMANAL -->
+<section class="screen hidden" id="screen-meta-semanal">
+  <h2 class="screen-title">Meta Semanal</h2>
+  <div class="form-group">
+    <label>Valor da Meta Semanal (R$)</label>
+    <input type="number" id="input-meta-semanal" placeholder="Ex: 1500.00">
+  </div>
+  <button class="btn btn-primary" id="btn-salvar-meta-semanal">Definir Meta</button>
+  
+  <div id="progresso-semanal" class="resumo-dia" style="margin-top:20px; background: var(--card); padding:15px; border-radius:12px; min-height: 50px;">
+    <p style="opacity:0.5; text-align:center;">Aguardando definição de meta...</p>
+  </div>
+  
+  <button class="btn btn-back" id="voltar-metas-semanal">← Voltar</button>
+  <button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+</section>
+
+<!-- TELA: FORMULÁRIO META DIÁRIA -->
+<section class="screen hidden" id="screen-meta-diaria">
+  <h2 class="screen-title">Meta Diária</h2>
+  <div class="form-group">
+    <label>Meta para Hoje (R$)</label>
+    <input type="number" id="input-meta-diaria" placeholder="Ex: 300.00">
+  </div>
+  <button class="btn btn-primary" id="btn-salvar-meta-diaria">Definir Meta</button>
+  
+  <div id="progresso-diario" class="resumo-dia" style="margin-top:20px; background: var(--card); padding:15px; border-radius:12px; text-align: center; min-height: 50px;">
+    <p style="opacity:0.5;">Aguardando definição de meta...</p>
+  </div>
+  
+  <button class="btn btn-back" id="voltar-metas-diaria">← Voltar</button>
+  <button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+</section>
+
+<!-- TELA: FORMULÁRIO META POR DATA E VALOR -->
+<section class="screen hidden" id="screen-meta-data-valor">
+  <h2 class="screen-title">Meta por Data</h2>
+  <div class="form-group">
+    <label>Título (Ex: Cartão Visa)</label>
+    <input type="text" id="meta-data-titulo" placeholder="Nome da meta">
+  </div>
+  <div class="form-group">
+    <label>Valor Alvo (R$)</label>
+    <input type="number" id="meta-data-valor" placeholder="1350.00">
+  </div>
+  <div class="form-group">
+    <label>Data Limite</label>
+    <input type="date" id="meta-data-limite">
+  </div>
+  <button class="btn btn-primary" id="btn-salvar-meta-data">Criar Meta Especial</button>
+
+  <div id="lista-metas-data" style="margin-top:20px;">
+    <!-- Lista de metas individuais aparecerá aqui via renderizarMetasPorData() -->
+  </div>
+
+  <button class="btn btn-back" id="voltar-metas-data">← Voltar</button>
+  <button class="btn btn-home" onclick="showScreen(screens.menu)">🏠 Menu Inicial</button>
+</section>
+
+</main>
 
   <!-- Links COMPLETOS para as bibliotecas de exportação (CORREÇÃO AQUI) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-  <style>
-    body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 0; }
-    .app { max-width: 500px; margin: 0 auto; background: #fff; min-height: 100vh; padding: 20px; box-sizing: border-box; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h2 { text-align: center; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-    .linha { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
-    label { flex: 1; font-size: 14px; font-weight: bold; }
-    input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
-    button { padding: 10px; cursor: pointer; border: none; border-radius: 4px; background: #007bff; color: white; font-weight: bold; }
-    button:active { opacity: 0.8; }
-    .readonly { background: #e9ecef; color: #495057; }
-    .tela { display: none; }
-    .tela.ativa { display: block; }
-    .menu button { width: 100%; margin-bottom: 10px; padding: 15px; font-size: 16px; text-align: left; }
-    .nav { display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
-    .btn-block { width: 100%; margin-top: 10px; }
-    .btn-save { background: #28a745; }
-    .btn-danger { background: #dc3545; }
-  </style>
-</head>
-<body>
+<script src="app.js"></script>
 
-<div class="app">
-  <section id="menu" class="tela ativa menu">
-    <h2>Menu Principal</h2>
-    <button onclick="irPara('inicioTurno')">▶ Iniciar Turno</button>
-    <button onclick="irPara('custos')">⛽ Lançar Custos / Ganhos</button>
-    <button onclick="irPara('fimTurno')">⏹ Finalizar Turno</button>
-    <button onclick="irPara('resumoDia')">📅 Resumo do Dia</button>
-    <button onclick="irPara('metasMensais')">📈 Metas Mensais</button>
-    <button onclick="irPara('historicoGeral')">📚 Histórico Geral</button>
-  </section>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('Service Worker registrado!', reg))
+        .catch(err => console.log('Erro ao registrar Service Worker', err));
+    });
+  }
+</script>
 
-  <section id="inicioTurno" class="tela">
-    <h2>Início de Turno</h2>
-    <div class="linha">
-      <label>Hora Início</label>
-      <input id="horaInicio" type="tel" placeholder="Ex: 0620" maxlength="5">
-      <button onclick="capturarHora('horaInicio')">⏱</button>
-    </div>
-    <div class="linha">
-      <label>KM Inicial</label>
-      <input id="kmInicial" type="number" placeholder="Ex: 12500">
-    </div>
-    <button class="btn-block btn-save" onclick="confirmarInicioTurno()">✅ Iniciar Agora</button>
-    <div class="nav"><button onclick="irPara('menu')">⬅ Menu</button></div>
-  </section>
-
-  <section id="custos" class="tela">
-    <h2>⛽ Custos e Ganhos</h2>
-    <div class="linha"><label>Abastecimento R$</label><input id="valorAbastecimento" type="number" step="0.01"><button onclick="adicionarAbastecimento()">+</button></div>
-    <div class="linha"><label>Total Gasto ⛽</label><input id="totalAbastecido" class="readonly" type="text" readonly value="0.00"></div>
-    <hr>
-    <div class="linha"><label>Outros Custos R$</label><input id="valorOutrosCustos" type="number" step="0.01"><button onclick="adicionarOutrosCustos()">+</button></div>
-    <div class="linha"><label>Total Outros</label><input id="totalOutrosCustos" class="readonly" type="text" readonly value="0.00"></div>
-    <div class="linha"><label>TOTAL CUSTOS</label><input id="totalCustos" class="readonly" type="text" readonly style="font-weight:bold"></div>
-    <hr>
-    <div class="linha"><label>VALOR APURADO R$</label><input id="apurado" type="number" step="0.01" placeholder="Ganhos totais"></div>
-    <button class="btn-block btn-save" onclick="inserirApurado()">💾 Salvar Dados</button>
-    <div class="nav"><button onclick="irPara('menu')">⬅ Menu</button><button onclick="irPara('fimTurno')">Finalizar ➡</button></div>
-  </section>
-
-  <section id="fimTurno" class="tela">
-    <h2>⏹ Fim de Turno</h2>
-    <div class="linha"><label>Hora Fim</label><input id="horaFim" type="tel" placeholder="HH:MM" maxlength="5"><button onclick="capturarHora('horaFim')">⏱</button></div>
-    <div class="linha"><label>KM Final</label><input id="kmFinal" type="number"></div>
-    <button class="btn-block btn-danger" onclick="confirmarFimTurno()">⏹ Encerrar Turno</button>
-    <div class="nav"><button onclick="irPara('menu')">⬅ Menu</button></div>
-  </section>
-
-  <section id="resumoTurno" class="tela">
-    <h2>📊 Resumo do Turno</h2>
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; line-height: 2;">
-      <div>Tempo: <strong id="resumoHoras">-</strong></div>
-      <div>Rodado: <strong id="resumoKM">-</strong></div>
-      <div>Custos: <strong id="resumoCustos">-</strong></div>
-      <div>Lucro: <strong id="resumoLucro" style="color:green">-</strong></div>
-      <div>Valor/Hora: <strong id="resumoValorHora">-</strong></div>
-    </div>
-    <button class="btn-block btn-save" style="margin-top:20px" onclick="salvarTurnoNoHistorico()">✅ Arquivar e Limpar para Novo Turno</button>
-    <div class="nav"><button onclick="irPara('menu')">⬅ Menu</button></div>
-  </section>
-
-  <section id="resumoDia" class="tela">
-    <h2>📅 Resumo do Dia (Hoje)</h2>
-    <div style="background: #e7f3ff; padding: 15px; border-radius: 8px; line-height: 2;">
-      <p>Intervalo Total: <strong id="diaHorasTrabalhadas">00:00h</strong></p>
-      <p>KM Total Rodado: <strong id="diaKM">0 km</strong></p>
-      <p>Total Abastecido: <strong id="diaAbastecido">R$ 0.00</strong></p>
-      <p>Outros Custos: <strong id="diaOutrosCustos">R$ 0.00</strong></p>
-      <p>Valor Apurado: <strong id="diaApurado">R$ 0.00</strong></p>
-      <hr>
-      <p>Lucro do Dia: <strong id="diaLucro" style="color:green; font-size:1.2em;">R$ 0.00</strong></p>
-      <p>Valor Médio da Hora: <strong id="diaValorHora">R$ 0.00/h</strong></p>
-    </div>
-    <div class="nav"><button onclick="irPara('menu')">⬅ Menu</button></div>
-  </section>
-  
-  <section id="metasMensais" class="tela">
-    <h2>📈 Metas Mensais</h2>
-    <div style="border: 1px solid #007bff; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-      <div class="linha"><label>Valor da Meta Mensal</label><input id="valorMetaMensal" type="number" step="0.01"><button onclick="atualizarMetaMensal()">💾 Salvar</button></div>
-      <button class="btn-block btn-danger" onclick="apagarMetaMensal()" style="font-size:12px; margin-top:-10px; margin-bottom:15px;">Apagar Meta e Custos Fixos</button>
-      <hr>
-      <div class="linha"><label>Descrição Custo Fixo</label><input id="descricaoCustoFixo" type="text" placeholder="Ex: Parcela Carro"></div>
-      <div class="linha"><label>Valor R$</label><input id="valorCustoFixo" type="number" step="0.01"><button onclick="inserirCustoFixo()">+</button></div>
-      <hr>
-      <strong>Lista de Custos Fixos:</strong>
-      <ul id="listaCustosFixos" style="list-style: none; padding: 0;"></ul>
-      <div class="linha" style="margin-top: 15px;"><label style="font-size: 16px;">Total Custos Fixos</label><input id="totalCustosFixos" class="readonly" type="text" readonly style="font-weight: bold;"></div>
-    </div>
-    <div style="background: #e9ecef; padding: 15px; border-radius: 5px;">
-        <div class="linha"><label>Sua Meta</label><input id="resumoSuaMeta" class="readonly" type="text" readonly></div>
-        <div class="linha"><label>Total Custos Fixos</label><input id="resumoTotalCustosFixos" class="readonly" type="text" readonly></div>
-        <hr>
-        <div class="linha"><label>Lucro do mês</label><input id="resumoLucroDoMes" class="readonly" type="text" readonly></div>
-        <div class="linha"><label style="font-size: 1.1em; font-weight: bold; color: #dc3545;">Falta Para Atingir a Meta</label><input id="resumoFaltaParaMeta" class="readonly" type="text" readonly style="color: #dc3545; font-size: 1.1em; font-weight: bold;"></div>
-    </div>
-    <div class="nav"><button onclick="irPara('menu')">⬅ Menu</button></div>
-  </section>
-
-  <section id="historicoGeral" class="tela">
-    <h2>📚 Histórico Geral</h2>
-    <ul id="listaHistorico" style="list-style: none; padding: 0;"></ul>
-    <button class="btn-block" onclick="exportarExcel()">⬇️ Exportar para Excel/CSV</button>
-    <button class="btn-block" onclick="exportarPDF()">⬇️ Exportar para PDF</button>
-    <button class="btn-block btn-danger" onclick="limparTodoHistorico()" style="font-size:12px">Apagar Todo Histórico</button>
-    <div class="nav"><button onclick="irPara('menu')">⬅ Menu</button></div>
-  </section>
-</div>
-<script src="./app.js"></script>
 </body>
 </html>
-
